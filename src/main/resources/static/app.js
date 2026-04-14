@@ -1,4 +1,5 @@
 const API_URL = "/api/tasks";
+const OVERVIEW_URL = "/api/tasks/overview";
 const STATUS_ORDER = ["TO_DO", "IN_PROGRESS", "REVIEW", "DONE"];
 const STATUS_LABELS = {
     TO_DO: "To Do",
@@ -20,10 +21,11 @@ const DEPARTMENT_LABELS = {
 };
 
 let tasks = [];
-let filteredTasks = [];
 let currentView = "dashboard-view";
 let selectedDepartment = "ALL";
 let selectedTaskId = null;
+let searchQuery = "";
+let overview = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     bindEvents();
@@ -56,14 +58,22 @@ function bindEvents() {
 
 async function fetchTasks() {
     try {
-        const response = await fetch(API_URL);
+        const params = new URLSearchParams();
+        if (searchQuery) {
+            params.set("query", searchQuery);
+        }
+        if (selectedDepartment && selectedDepartment !== "ALL") {
+            params.set("department", selectedDepartment);
+        }
+
+        const response = await fetch(`${OVERVIEW_URL}${params.toString() ? `?${params}` : ""}`);
         if (!response.ok) {
             throw new Error("Task listesi alinamadi");
         }
 
-        tasks = await response.json();
-        filteredTasks = [...tasks];
-        selectedTaskId = filteredTasks[0]?.id ?? null;
+        overview = await response.json();
+        tasks = overview.tasks || [];
+        selectedTaskId = tasks.some((task) => task.id === selectedTaskId) ? selectedTaskId : tasks[0]?.id ?? null;
         updateProfile();
         renderApp();
     } catch (error) {
@@ -73,42 +83,16 @@ async function fetchTasks() {
 }
 
 function filterTasks(query) {
-    const normalized = query.trim().toLowerCase();
-
-    filteredTasks = tasks.filter((task) => {
-        if (!normalized) {
-            return true;
-        }
-
-        const fields = [
-            task.title,
-            task.description,
-            task.status,
-            task.priority,
-            task.department,
-            task.assignee?.fullName
-        ].filter(Boolean);
-
-        return fields.some((field) => field.toLowerCase().includes(normalized));
-    });
-
-    if (!filteredTasks.some((task) => task.id === selectedTaskId)) {
-        selectedTaskId = filteredTasks[0]?.id ?? null;
-    }
-
-    renderApp();
+    searchQuery = query.trim();
+    fetchTasks();
 }
 
 function renderApp() {
-    const scopedTasks = selectedDepartment === "ALL"
-        ? filteredTasks
-        : filteredTasks.filter((task) => task.department === selectedDepartment);
-
-    renderDashboard(scopedTasks);
-    renderTaskDetails(scopedTasks);
-    renderGroupWorkspace(scopedTasks);
-    renderCalendar(scopedTasks);
-    renderAnalytics(scopedTasks);
+    renderDashboard();
+    renderTaskDetails();
+    renderGroupWorkspace();
+    renderCalendar();
+    renderAnalytics();
 }
 
 function setActiveView(viewId) {
@@ -123,19 +107,15 @@ function setActiveView(viewId) {
     });
 }
 
-function renderDashboard(currentTasks) {
-    const focusTask = getPrimaryTask(currentTasks);
-    const secondaryTasks = currentTasks.filter((task) => task.id !== focusTask?.id).slice(0, 3);
-    const completedCount = currentTasks.filter((task) => task.status === "DONE").length;
-    const totalEstimated = sumOf(currentTasks, "estimatedHours");
-    const totalRemaining = sumOf(currentTasks, "remainingHours");
-    const completionRate = currentTasks.length ? Math.round((completedCount / currentTasks.length) * 100) : 0;
-    const efficiencyHours = Math.max(0, totalEstimated - totalRemaining);
+function renderDashboard() {
+    const dashboard = overview?.dashboard;
+    const focusTask = dashboard?.focusTask || null;
+    const secondaryTasks = dashboard?.secondaryTasks || [];
 
     document.getElementById("heroSubtitle").textContent =
-        `${formatToday()} - You have ${currentTasks.filter((task) => task.priority === "HIGH").length} critical focuses.`;
+        dashboard?.heroSubtitle || `${formatToday()} - You have 0 critical focuses.`;
     document.getElementById("heroProject").textContent =
-        focusTask ? `Project: ${focusTask.title}` : "Project: Editorial Flow Refresh";
+        dashboard?.heroProject || "Project: Editorial Flow Refresh";
 
     document.getElementById("focusTask").innerHTML = focusTask
         ? renderFocusTask(focusTask)
@@ -145,61 +125,52 @@ function renderDashboard(currentTasks) {
         ? secondaryTasks.map(renderStackItem).join("")
         : `<div class="detail-item"><div class="checkmark"></div><div><strong>No follow-up tasks</strong><span>Once you add more tasks they will appear here.</span></div><span>--</span></div>`;
 
-    document.getElementById("efficiencyValue").innerHTML = `${efficiencyHours.toFixed(1)}<span>/6h</span>`;
-    document.getElementById("focusRate").textContent = `${completionRate}%`;
-    document.getElementById("focusRateLabel").textContent = `${completionRate}%`;
-    document.getElementById("estimatedHours").textContent = `${totalEstimated.toFixed(1)} hrs`;
-    document.getElementById("remainingHours").textContent = `${totalRemaining.toFixed(1)} hrs`;
-    document.getElementById("efficiencyBar").style.width = `${Math.min(completionRate || 8, 100)}%`;
+    document.getElementById("efficiencyValue").innerHTML = `${Number(dashboard?.efficiencyHours || 0).toFixed(1)}<span>/6h</span>`;
+    document.getElementById("focusRate").textContent = `${dashboard?.completionRate || 0}%`;
+    document.getElementById("focusRateLabel").textContent = `${dashboard?.completionRate || 0}%`;
+    document.getElementById("estimatedHours").textContent = `${Number(dashboard?.estimatedHours || 0).toFixed(1)} hrs`;
+    document.getElementById("remainingHours").textContent = `${Number(dashboard?.remainingHours || 0).toFixed(1)} hrs`;
+    document.getElementById("efficiencyBar").style.width = `${Math.min(dashboard?.completionRate || 8, 100)}%`;
 
-    const slots = buildTimeSlots(currentTasks);
-    document.getElementById("timeSlots").innerHTML = slots.map(renderTimeSlot).join("");
-
-    if (focusTask) {
-        document.getElementById("insightTitle").textContent =
-            `${focusTask.title} icin en guclu penceren 10:00 - 12:00 araligi.`;
-        document.getElementById("insightText").textContent =
-            `${PRIORITY_LABELS[focusTask.priority] || "Priority task"} yogunlugu yuksek. Bu gorevi sabah derin odak bloguna yerlestirmen verimi artirir.`;
-    }
+    document.getElementById("timeSlots").innerHTML = (dashboard?.timeSlots || []).map(renderTimeSlot).join("");
+    document.getElementById("insightTitle").textContent = dashboard?.insightTitle || "Your strongest focus window is waiting to be filled.";
+    document.getElementById("insightText").textContent = dashboard?.insightText || "Create a task to generate personalized focus recommendations.";
 }
 
-function renderTaskDetails(currentTasks) {
-    const list = currentTasks.slice(0, 5);
-    const activeTask = currentTasks.find((task) => task.id === selectedTaskId) || getPrimaryTask(currentTasks);
+function renderTaskDetails() {
+    const list = tasks.slice(0, 5);
+    const activeTask = tasks.find((task) => task.id === selectedTaskId) || overview?.dashboard?.focusTask || tasks[0];
 
     document.getElementById("taskDetailList").innerHTML = list.length
         ? list.map((task) => renderDetailItem(task, task.id === activeTask?.id)).join("")
         : `<div class="detail-item"><div class="checkmark"></div><div><strong>No tasks found</strong><span>Search filtresini temizleyip tekrar deneyin.</span></div><span>--</span></div>`;
 }
 
-function renderGroupWorkspace(currentTasks) {
-    const velocity = currentTasks.length
-        ? Math.round((currentTasks.filter((task) => task.status === "DONE").length / currentTasks.length) * 100)
-        : 0;
-    const dueSoon = currentTasks.filter((task) => daysUntil(task.dueDate) <= 3 && daysUntil(task.dueDate) >= 0).length;
-    const activeSprintCount = currentTasks.filter((task) => task.status !== "DONE").length;
+function renderGroupWorkspace() {
+    const groupWorkspace = overview?.groupWorkspace;
 
-    document.getElementById("velocityPercent").textContent = `${velocity}%`;
-    document.getElementById("velocityBar").style.width = `${Math.max(velocity, 8)}%`;
-    document.getElementById("activeSprints").textContent = activeSprintCount;
-    document.getElementById("dueSoonLabel").textContent = `${dueSoon} due soon`;
-    document.getElementById("riskLevel").textContent = velocity > 65 ? "Low" : velocity > 35 ? "Moderate" : "High";
+    document.getElementById("velocityPercent").textContent = `${groupWorkspace?.velocityPercent || 0}%`;
+    document.getElementById("velocityBar").style.width = `${Math.max(groupWorkspace?.velocityPercent || 0, 8)}%`;
+    document.getElementById("activeSprints").textContent = groupWorkspace?.activeSprints || 0;
+    document.getElementById("dueSoonLabel").textContent = `${groupWorkspace?.dueSoon || 0} due soon`;
+    document.getElementById("riskLevel").textContent = groupWorkspace?.riskLevel || "Low";
 
-    renderDepartmentTabs(currentTasks);
-    renderPresenceList(currentTasks);
-    renderKanban(currentTasks);
+    renderDepartmentTabs();
+    renderPresenceList();
+    renderKanban();
 }
 
-function renderCalendar(currentTasks) {
-    const unscheduled = currentTasks.slice(0, 3);
-    document.getElementById("calendarMonth").textContent = formatCalendarHeading();
+function renderCalendar() {
+    const calendar = overview?.calendar;
+    const unscheduled = calendar?.unscheduledTasks || [];
+    document.getElementById("calendarMonth").textContent = calendar?.monthLabel || formatCalendarHeading();
     document.getElementById("unscheduledList").innerHTML = unscheduled.length
         ? unscheduled.map(renderUnscheduledCard).join("")
         : `<div class="unscheduled-card"><strong>No unscheduled tasks</strong><span>Everything looks organized for this week.</span></div>`;
 
     const hours = ["08 AM", "09 AM", "10 AM", "11 AM", "12 PM", "01 PM", "02 PM", "03 PM", "04 PM", "05 PM"];
     const days = ["Mon 14", "Tue 15", "Wed 16", "Thu 17", "Fri 18", "Sat 19", "Sun 20"];
-    const events = buildCalendarEvents(currentTasks);
+    const events = calendar?.events || [];
 
     let markup = `<div class="calendar-time-header"><i class="fa-regular fa-clock"></i></div>`;
     markup += days.map((day, index) => `<div class="calendar-day-header ${index === 1 ? "highlight" : ""}">${day}</div>`).join("");
@@ -216,50 +187,46 @@ function renderCalendar(currentTasks) {
     document.getElementById("calendarGrid").innerHTML = markup;
 }
 
-function renderAnalytics(currentTasks) {
-    const completion = currentTasks.length
-        ? Math.round((currentTasks.filter((task) => task.status === "DONE").length / currentTasks.length) * 100)
-        : 0;
+function renderAnalytics() {
+    const analytics = overview?.analytics;
 
-    document.getElementById("analyticsCompletion").textContent = `${completion}%`;
-    document.getElementById("statusBreakdown").innerHTML = STATUS_ORDER
-        .map((status) => createBreakdownRow(STATUS_LABELS[status], currentTasks.filter((task) => task.status === status).length, currentTasks.length))
+    document.getElementById("analyticsCompletion").textContent = `${analytics?.completionRate || 0}%`;
+    document.getElementById("statusBreakdown").innerHTML = (analytics?.statusBreakdown || [])
+        .map((item) => createBreakdownRow(item.label, item.count, item.percentage))
         .join("");
-
-    const departmentCounts = countBy(currentTasks, "department");
-    document.getElementById("departmentBreakdown").innerHTML = Object.keys(DEPARTMENT_LABELS)
-        .map((department) => createBreakdownRow(DEPARTMENT_LABELS[department], departmentCounts[department] || 0, currentTasks.length))
+    document.getElementById("departmentBreakdown").innerHTML = (analytics?.departmentBreakdown || [])
+        .map((item) => createBreakdownRow(item.label, item.count, item.percentage))
         .join("");
 }
 
-function renderDepartmentTabs(currentTasks) {
-    const tabs = ["ALL", ...Object.keys(DEPARTMENT_LABELS)];
+function renderDepartmentTabs() {
+    const tabs = overview?.groupWorkspace?.departmentTabs || ["ALL", ...Object.keys(DEPARTMENT_LABELS)];
     const container = document.getElementById("departmentTabs");
 
     container.innerHTML = tabs.map((tab) => {
-        const label = tab === "ALL" ? "All Departments" : DEPARTMENT_LABELS[tab];
+        const label = tab === "ALL" ? "All Departments" : (DEPARTMENT_LABELS[tab] || tab);
         return `<button class="department-tab ${selectedDepartment === tab ? "active" : ""}" data-department="${tab}">${label}</button>`;
     }).join("");
 
     container.querySelectorAll(".department-tab").forEach((button) => {
         button.addEventListener("click", () => {
             selectedDepartment = button.dataset.department;
-            renderApp();
+            fetchTasks();
         });
     });
 }
 
-function renderPresenceList(currentTasks) {
-    const uniqueUsers = deduplicateUsers(currentTasks);
+function renderPresenceList() {
+    const users = overview?.groupWorkspace?.presence || [];
     const container = document.getElementById("teamPresence");
 
-    container.innerHTML = uniqueUsers.length
-        ? uniqueUsers.map((user, index) => `
+    container.innerHTML = users.length
+        ? users.map((user) => `
             <article class="presence-card">
                 <img src="${avatarForUser(user)}" alt="${escapeHtml(user.fullName)}">
                 <div>
                     <strong>${escapeHtml(user.fullName)}</strong>
-                    <span>${escapeHtml(user.title || "Team Member")} • ${index % 3 === 2 ? "Away" : "Online"}</span>
+                    <span>${escapeHtml(user.title || "Team Member")} - ${escapeHtml(user.availability || "Online")}</span>
                 </div>
                 <i class="fa-solid fa-message"></i>
             </article>
@@ -267,11 +234,12 @@ function renderPresenceList(currentTasks) {
         : `<article class="presence-card"><div class="presence-dot"></div><div><strong>No team data</strong><span>Add assignees to tasks for team presence.</span></div><i class="fa-solid fa-message"></i></article>`;
 }
 
-function renderKanban(currentTasks) {
+function renderKanban() {
     const container = document.getElementById("kanbanBoard");
+    const kanban = overview?.groupWorkspace?.kanban || {};
 
     container.innerHTML = STATUS_ORDER.map((status) => {
-        const items = currentTasks.filter((task) => task.status === status);
+        const items = kanban[status] || [];
         return `
             <section class="kanban-column">
                 <h4>${STATUS_LABELS[status]} ${items.length ? `<span>(${items.length})</span>` : ""}</h4>
@@ -290,30 +258,6 @@ function renderKanban(currentTasks) {
             }
         });
     });
-}
-
-function buildTimeSlots(currentTasks) {
-    const focus = getPrimaryTask(currentTasks);
-    const secondary = currentTasks.find((task) => task.id !== focus?.id);
-    const third = currentTasks.find((task) => task.id !== focus?.id && task.id !== secondary?.id);
-
-    return [
-        { time: "09:00", label: focus?.title || "Deep Work", style: "green" },
-        { time: "11:30", label: "Free Slot - 45m available", style: "outline" },
-        { time: "12:30", label: secondary?.title || "Lunch Break", style: "violet" },
-        { time: "14:00", label: third?.title || "Team Sync", style: "blue" }
-    ];
-}
-
-function buildCalendarEvents(currentTasks) {
-    const hours = ["08 AM", "09 AM", "10 AM", "11 AM", "02 PM"];
-    return currentTasks.slice(0, 5).map((task, index) => ({
-        title: task.title,
-        time: `${["08:30", "09:00", "10:00", "11:00", "14:00"][index] || "09:30"} - ${["10:15", "10:00", "12:30", "12:00", "15:00"][index] || "10:30"}`,
-        dayIndex: index % 5,
-        hour: hours[index] || "09 AM",
-        className: index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "violet"
-    }));
 }
 
 function renderFocusTask(task) {
@@ -409,8 +353,7 @@ function renderKanbanCard(task) {
     `;
 }
 
-function createBreakdownRow(label, count, total) {
-    const percentage = total ? Math.round((count / total) * 100) : 0;
+function createBreakdownRow(label, count, percentage) {
     return `
         <div class="breakdown-row">
             <span>${escapeHtml(label)}</span>
@@ -449,7 +392,7 @@ function openEditModal(task) {
 }
 
 function openSelectedTask() {
-    const task = filteredTasks.find((item) => item.id === selectedTaskId) || filteredTasks[0];
+    const task = tasks.find((item) => item.id === selectedTaskId) || tasks[0];
     if (task) {
         openEditModal(task);
     } else {
@@ -529,57 +472,10 @@ async function handleDeleteTask() {
 }
 
 function updateProfile() {
-    const assignee = deduplicateUsers(tasks)[0];
-    if (!assignee) {
-        return;
-    }
-
-    document.getElementById("profileAvatar").src = avatarForUser(assignee);
-    document.getElementById("profileName").textContent = assignee.fullName || "Team Member";
-    document.getElementById("profileRole").textContent = assignee.title || "Contributor";
-}
-
-function getPrimaryTask(currentTasks) {
-    const sorted = [...currentTasks].sort((left, right) => {
-        const leftPriority = priorityScore(left.priority);
-        const rightPriority = priorityScore(right.priority);
-
-        if (rightPriority !== leftPriority) {
-            return rightPriority - leftPriority;
-        }
-
-        return daysUntil(left.dueDate) - daysUntil(right.dueDate);
-    });
-
-    return sorted[0];
-}
-
-function priorityScore(priority) {
-    return priority === "HIGH" ? 3 : priority === "MEDIUM" ? 2 : 1;
-}
-
-function deduplicateUsers(currentTasks) {
-    const map = new Map();
-
-    currentTasks.forEach((task) => {
-        if (task.assignee?.id && !map.has(task.assignee.id)) {
-            map.set(task.assignee.id, task.assignee);
-        }
-    });
-
-    return [...map.values()];
-}
-
-function countBy(items, field) {
-    return items.reduce((acc, item) => {
-        const key = item[field] || "UNKNOWN";
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-    }, {});
-}
-
-function sumOf(items, field) {
-    return items.reduce((sum, item) => sum + Number(item[field] || 0), 0);
+    const profile = overview?.profile;
+    document.getElementById("profileAvatar").src = avatarForUser(profile);
+    document.getElementById("profileName").textContent = profile?.fullName || "Team Member";
+    document.getElementById("profileRole").textContent = profile?.title || "Contributor";
 }
 
 function formatToday() {
@@ -674,21 +570,19 @@ document.addEventListener("click", (event) => {
     if (detailItem) {
         selectedTaskId = Number(detailItem.dataset.id);
         if (currentView === "tasks-view") {
-            renderTaskDetails(selectedDepartment === "ALL"
-                ? filteredTasks
-                : filteredTasks.filter((item) => item.department === selectedDepartment));
+            renderTaskDetails();
         }
     }
 
     if (event.target.id === "quickFocusButton" || event.target.closest("#quickFocusButton")) {
-        const focusTask = getPrimaryTask(filteredTasks);
+        const focusTask = overview?.dashboard?.focusTask;
         if (focusTask) {
             openEditModal(focusTask);
         }
     }
 
     if (event.target.id === "shareTaskButton" || event.target.closest("#shareTaskButton")) {
-        const focusTask = getPrimaryTask(filteredTasks);
+        const focusTask = overview?.dashboard?.focusTask;
         if (focusTask) {
             navigator.clipboard?.writeText(`${focusTask.title} - ${focusTask.description || ""}`);
             alert("Current focus copied to clipboard.");
