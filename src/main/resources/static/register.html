@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol | Fluid Tasks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-auth-view="register">
+    <div id="authScreen" class="auth-screen auth-screen-single">
+        <div class="auth-card auth-hero">
+            <p class="eyebrow">Yeni Hesap</p>
+            <h1>Fluid Tasks dünyasına katıl.</h1>
+            <p>Yeni hesabını birkaç adımda oluştur, ardından görevlerini ve panolarını tek merkezden yönetmeye başla.</p>
+            <div class="auth-feature-list">
+                <div><i class="fa-solid fa-circle-check"></i><span>Kişisel görev akışın hesabınla birlikte güvenle saklanır.</span></div>
+                <div><i class="fa-solid fa-circle-check"></i><span>Ekip görevleri ve takvim görünümü aynı panelde buluşur.</span></div>
+                <div><i class="fa-solid fa-circle-check"></i><span>Kayıt sonrası doğrudan hesabına giriş yapılır.</span></div>
+            </div>
+        </div>
+
+        <div class="auth-card auth-form-wrap">
+            <form id="registerForm" class="auth-form" novalidate>
+                <h2>Yeni hesap oluştur</h2>
+                <p class="auth-copy">Bilgilerini gir, hesabını oluştur ve hemen kullanmaya başla.</p>
+
+                <div id="authMessage" class="auth-message hidden" role="alert" aria-live="polite"></div>
+
+                <label for="registerName">
+                    <span>Ad Soyad / Kullanıcı Adı</span>
+                    <input id="registerName" name="fullName" type="text" autocomplete="name" placeholder="Ad Soyad" required>
+                </label>
+                <label for="registerEmail">
+                    <span>E-posta</span>
+                    <input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="ornek@fluidtasks.io" required>
+                </label>
+                <label for="registerPassword">
+                    <span>Şifre</span>
+                    <input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="En az 6 karakter" required>
+                </label>
+                <label for="registerConfirmPassword">
+                    <span>Şifre Tekrar</span>
+                    <input id="registerConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Şifreni tekrar gir" required>
+                </label>
+
+                <button type="submit" class="primary-button auth-submit">Kayıt Ol</button>
+                <p class="auth-hint">Şifren en az 6 karakter olmalı ve e-posta adresin geçerli bir biçimde girilmelidir.</p>
+                <p class="auth-switch">Zaten hesabın var mı? <a href="index.html">Giriş yap</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

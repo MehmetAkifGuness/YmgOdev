@@ -8,6 +8,7 @@ const PRIORITY_LABELS = { HIGH: "Yüksek Öncelik", MEDIUM: "Orta Öncelik", LOW
 const DEPARTMENT_LABELS = { EDITORIAL: "Editoryal", DESIGN: "Tasarım", TECH: "Teknik", PRODUCT: "Ürün", MARKETING: "Pazarlama" };
 const CALENDAR_HOURS = ["08 AM", "09 AM", "10 AM", "11 AM", "12 PM", "01 PM", "02 PM", "03 PM", "04 PM", "05 PM"];
 const CALENDAR_DAYS = ["Pzt 14", "Sal 15", "Çar 16", "Per 17", "Cum 18", "Cmt 19", "Paz 20"];
+const AUTH_VIEW = document.body.dataset.authView || "login";
 
 let tasks = [];
 let overview = null;
@@ -24,14 +25,12 @@ let chatMessages = [
 document.addEventListener("DOMContentLoaded", () => {
     bindEvents();
     syncAuthState();
-    if (currentUser) fetchTasks();
+    if (currentUser && AUTH_VIEW === "login") fetchTasks();
 });
 
 function bindEvents() {
     document.querySelectorAll(".nav-item").forEach((item) => item.addEventListener("click", () => setActiveView(item.dataset.view)));
     on("searchInput", "input", (event) => { searchQuery = event.target.value.trim(); fetchTasks(); });
-    on("showLoginButton", "click", () => toggleAuthMode("login"));
-    on("showRegisterButton", "click", () => toggleAuthMode("register"));
     on("loginForm", "submit", handleLogin);
     on("registerForm", "submit", handleRegister);
     on("openCreateTask", "click", () => openCreateModal());
@@ -90,31 +89,46 @@ function bindSegmentedControl(id, onChange) {
 }
 
 function syncAuthState() {
-    byId("authScreen").classList.toggle("hidden", Boolean(currentUser));
-    byId("appShell").classList.toggle("hidden", !currentUser);
-    if (currentUser) { updateProfile(); renderChat(); }
-}
+    const authScreen = byId("authScreen");
+    const appShell = byId("appShell");
 
-function toggleAuthMode(mode) {
-    const isLogin = mode === "login";
-    byId("showLoginButton").classList.toggle("active", isLogin);
-    byId("showRegisterButton").classList.toggle("active", !isLogin);
-    byId("loginForm").classList.toggle("hidden", !isLogin);
-    byId("registerForm").classList.toggle("hidden", isLogin);
+    if (AUTH_VIEW === "register" && currentUser) {
+        window.location.replace("index.html");
+        return;
+    }
+
+    if (authScreen) authScreen.classList.toggle("hidden", Boolean(currentUser) && AUTH_VIEW === "login");
+    if (appShell) appShell.classList.toggle("hidden", !currentUser);
+    if (currentUser && appShell) { updateProfile(); renderChat(); }
 }
 
 async function handleLogin(event) {
     event.preventDefault();
-    await authRequest("/login", { email: value("loginEmail"), password: byId("loginPassword").value }, "Giriş başarılı.");
+    clearAuthMessage();
+    const email = value("loginEmail");
+    const password = byId("loginPassword").value;
+
+    if (!email || !password) return showAuthMessage("E-posta ve şifre zorunludur.");
+    if (!isValidEmail(email)) return showAuthMessage("Lütfen geçerli bir e-posta adresi gir.");
+
+    await authRequest("/login", { email, password }, "Giriş başarılı.");
 }
 
 async function handleRegister(event) {
     event.preventDefault();
-    await authRequest(
-        "/register",
-        { fullName: value("registerName"), email: value("registerEmail"), password: byId("registerPassword").value },
-        "Kayıt tamamlandı ve oturum açıldı."
-    );
+    clearAuthMessage();
+
+    const fullName = value("registerName");
+    const email = value("registerEmail");
+    const password = byId("registerPassword").value;
+    const confirmPassword = byId("registerConfirmPassword")?.value || "";
+
+    if (!fullName || !email || !password || !confirmPassword) return showAuthMessage("Tüm alanları doldurman gerekiyor.");
+    if (!isValidEmail(email)) return showAuthMessage("Lütfen geçerli bir e-posta adresi gir.");
+    if (password.length < 6) return showAuthMessage("Şifre en az 6 karakter olmalıdır.");
+    if (password !== confirmPassword) return showAuthMessage("Şifreler birbiriyle eşleşmiyor.");
+
+    await authRequest("/register", { fullName, email, password }, "Kayıt tamamlandı ve oturum açıldı.");
 }
 
 async function authRequest(path, body, successMessage) {
@@ -124,9 +138,15 @@ async function authRequest(path, body, successMessage) {
         saveSessionUser(data);
         resetAuthForms();
         syncAuthState();
+        if (AUTH_VIEW === "register") {
+            showToast(successMessage, "success");
+            window.location.replace("index.html");
+            return;
+        }
         await fetchTasks();
         showToast(successMessage, "success");
     } catch (error) {
+        showAuthMessage(error.message || "İşlem başarısız.");
         showToast(error.message || "İşlem başarısız.", "error");
     }
 }
@@ -141,7 +161,6 @@ function logout() {
     resetAuthForms();
     clearAppView("Henüz veri bulunmuyor.");
     syncAuthState();
-    toggleAuthMode("login");
     showToast("Oturum kapatıldı.");
 }
 
@@ -473,6 +492,27 @@ function saveSessionUser(user) {
 function resetAuthForms() {
     byId("loginForm")?.reset();
     byId("registerForm")?.reset();
+    clearAuthMessage();
+}
+
+function showAuthMessage(message, type = "error") {
+    const element = byId("authMessage");
+    if (!element) return;
+    element.textContent = message;
+    element.classList.remove("hidden", "success");
+    if (type === "success") element.classList.add("success");
+}
+
+function clearAuthMessage() {
+    const element = byId("authMessage");
+    if (!element) return;
+    element.textContent = "";
+    element.classList.add("hidden");
+    element.classList.remove("success");
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function jsonRequest(method, body) {

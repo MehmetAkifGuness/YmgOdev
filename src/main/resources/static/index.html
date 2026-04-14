@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-auth-view="login">
     <div id="authScreen" class="auth-screen">
         <div class="auth-card auth-hero">
             <p class="eyebrow">Akıllı Görev Platformu</p>
@@ -24,40 +24,24 @@
         </div>
 
         <div class="auth-card auth-form-wrap">
-            <div class="auth-toggle">
-                <button type="button" id="showLoginButton" class="active">Giriş Yap</button>
-                <button type="button" id="showRegisterButton">Kayıt Ol</button>
-            </div>
-
-            <form id="loginForm" class="auth-form">
+            <form id="loginForm" class="auth-form" novalidate>
                 <h2>Hesabına giriş yap</h2>
-                <label>
+                <p class="auth-copy">Kayıtlı e-posta adresin ve şifren ile devam et.</p>
+
+                <div id="authMessage" class="auth-message hidden" role="alert" aria-live="polite"></div>
+
+                <label for="loginEmail">
                     <span>E-posta</span>
-                    <input id="loginEmail" type="email" placeholder="ornek@fluidtasks.io" required>
+                    <input id="loginEmail" name="email" type="email" autocomplete="email" placeholder="ornek@fluidtasks.io" required>
                 </label>
-                <label>
+                <label for="loginPassword">
                     <span>Şifre</span>
-                    <input id="loginPassword" type="password" placeholder="Şifreni gir" required>
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Şifreni gir" required>
                 </label>
+
                 <button type="submit" class="primary-button auth-submit">Giriş Yap</button>
                 <p class="auth-hint">Örnek hesaplar: `alex@fluidtasks.io`, `sarah@fluidtasks.io`, `marcus@fluidtasks.io` - şifre: `123456`</p>
-            </form>
-
-            <form id="registerForm" class="auth-form hidden">
-                <h2>Yeni hesap oluştur</h2>
-                <label>
-                    <span>Ad Soyad</span>
-                    <input id="registerName" type="text" placeholder="Ad Soyad" required>
-                </label>
-                <label>
-                    <span>E-posta</span>
-                    <input id="registerEmail" type="email" placeholder="ornek@fluidtasks.io" required>
-                </label>
-                <label>
-                    <span>Şifre</span>
-                    <input id="registerPassword" type="password" placeholder="En az 6 karakter" required>
-                </label>
-                <button type="submit" class="primary-button auth-submit">Kayıt Ol</button>
+                <p class="auth-switch">Hesabın yok mu? <a href="register.html">Kayıt ol</a></p>
             </form>
         </div>
     </div>
@@ -217,7 +201,7 @@
                     <aside class="right-rail">
                         <section class="panel">
                             <div class="panel-header">
-                            <h3>Brif Dosyaları</h3>
+                                <h3>Brif Dosyaları</h3>
                             </div>
                             <button type="button" class="doc-card" id="openGuideButton">
                                 <i class="fa-solid fa-file-lines"></i>

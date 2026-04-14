@@ -13,6 +13,7 @@ import java.util.Locale;
 
 @Service
 public class AuthService {
+    private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -61,6 +62,14 @@ public class AuthService {
     private void validateRequest(AuthRequest request, boolean requiresName) {
         if (request == null || request.email() == null || request.email().isBlank() || request.password() == null || request.password().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-posta ve şifre zorunludur");
+        }
+
+        if (!request.email().trim().matches(EMAIL_REGEX)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Geçerli bir e-posta adresi girin");
+        }
+
+        if (request.password().length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Şifre en az 6 karakter olmalıdır");
         }
 
         if (requiresName && (request.fullName() == null || request.fullName().isBlank())) {
