@@ -7,6 +7,7 @@ import com.gunes.docker.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner seedData(UserRepository userRepository, TaskRepository taskRepository) {
+    CommandLineRunner seedData(UserRepository userRepository, TaskRepository taskRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             if (taskRepository.count() > 0) {
                 return;
@@ -24,31 +25,34 @@ public class DataInitializer {
             User alex = userRepository.save(new User(
                     null,
                     "Alex Morgan",
-                    "Editorial Lead",
+                    "Editör Lideri",
                     "alex@fluidtasks.io",
-                    "https://ui-avatars.com/api/?name=Alex+Morgan&background=0f6ea8&color=fff"
+                    "https://ui-avatars.com/api/?name=Alex+Morgan&background=0f6ea8&color=fff",
+                    passwordEncoder.encode("123456")
             ));
 
             User sarah = userRepository.save(new User(
                     null,
                     "Sarah Jones",
-                    "UI Design",
+                    "UI Tasarım",
                     "sarah@fluidtasks.io",
-                    "https://ui-avatars.com/api/?name=Sarah+Jones&background=34d399&color=083344"
+                    "https://ui-avatars.com/api/?name=Sarah+Jones&background=34d399&color=083344",
+                    passwordEncoder.encode("123456")
             ));
 
             User marcus = userRepository.save(new User(
                     null,
                     "Marcus Tate",
-                    "Engineering",
+                    "Mühendislik",
                     "marcus@fluidtasks.io",
-                    "https://ui-avatars.com/api/?name=Marcus+Tate&background=6366f1&color=fff"
+                    "https://ui-avatars.com/api/?name=Marcus+Tate&background=6366f1&color=fff",
+                    passwordEncoder.encode("123456")
             ));
 
             taskRepository.saveAll(List.of(
                     buildTask(
-                            "Finalize Q3 Editorial Strategy",
-                            "Review all content pillars and align them with the refreshed design system before stakeholder review.",
+                            "Q3 Editoryal Stratejiyi Tamamla",
+                            "Tüm içerik kolonlarını yeni tasarım sistemiyle hizala ve paydaş toplantısına hazırla.",
                             "IN_PROGRESS",
                             "EDITORIAL",
                             "HIGH",
@@ -58,8 +62,8 @@ public class DataInitializer {
                             alex
                     ),
                     buildTask(
-                            "API Migration to V3",
-                            "Coordinate backend endpoints and frontend bindings for the updated collaboration board.",
+                            "API Geçişini V3 Sürümüne Taşı",
+                            "Güncel ekip panosu için backend endpointleri ile frontend bağlarını hizala.",
                             "REVIEW",
                             "TECH",
                             "HIGH",
@@ -69,8 +73,8 @@ public class DataInitializer {
                             marcus
                     ),
                     buildTask(
-                            "Homepage Interaction Prototypes",
-                            "Test lightweight motion and card transitions for the new productivity experience.",
+                            "Ana Sayfa Etkileşim Prototipleri",
+                            "Yeni verimlilik deneyimi için hafif hareketler ve kart geçişlerini test et.",
                             "TO_DO",
                             "DESIGN",
                             "MEDIUM",
@@ -80,8 +84,8 @@ public class DataInitializer {
                             sarah
                     ),
                     buildTask(
-                            "Social Media Asset Package",
-                            "Prepare final export set for campaign delivery and archive the approved variants.",
+                            "Sosyal Medya Görsel Paketi",
+                            "Kampanya teslimi için son export setini hazırla ve onaylı varyasyonları arşivle.",
                             "DONE",
                             "MARKETING",
                             "LOW",

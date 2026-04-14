@@ -11,47 +11,99 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-shell">
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card auth-hero">
+            <p class="eyebrow">Akıllı Görev Platformu</p>
+            <h1>Fluid Tasks ile gününü tek panelden yönet.</h1>
+            <p>Giriş yap, görevlerini yönet, ekibini takip et ve tüm panolarda backend ile tam uyumlu bir deneyim kullan.</p>
+            <div class="auth-feature-list">
+                <div><i class="fa-solid fa-circle-check"></i><span>Görev, takvim ve analizler tek veri kaynağından gelir.</span></div>
+                <div><i class="fa-solid fa-circle-check"></i><span>Kayıt olduktan sonra yeni görevler hesabınla eşlenir.</span></div>
+                <div><i class="fa-solid fa-circle-check"></i><span>Butonlar görünüş değil, gerçek davranış üretir.</span></div>
+            </div>
+        </div>
+
+        <div class="auth-card auth-form-wrap">
+            <div class="auth-toggle">
+                <button type="button" id="showLoginButton" class="active">Giriş Yap</button>
+                <button type="button" id="showRegisterButton">Kayıt Ol</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <h2>Hesabına giriş yap</h2>
+                <label>
+                    <span>E-posta</span>
+                    <input id="loginEmail" type="email" placeholder="ornek@fluidtasks.io" required>
+                </label>
+                <label>
+                    <span>Şifre</span>
+                    <input id="loginPassword" type="password" placeholder="Şifreni gir" required>
+                </label>
+                <button type="submit" class="primary-button auth-submit">Giriş Yap</button>
+                <p class="auth-hint">Örnek hesaplar: `alex@fluidtasks.io`, `sarah@fluidtasks.io`, `marcus@fluidtasks.io` - şifre: `123456`</p>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <h2>Yeni hesap oluştur</h2>
+                <label>
+                    <span>Ad Soyad</span>
+                    <input id="registerName" type="text" placeholder="Ad Soyad" required>
+                </label>
+                <label>
+                    <span>E-posta</span>
+                    <input id="registerEmail" type="email" placeholder="ornek@fluidtasks.io" required>
+                </label>
+                <label>
+                    <span>Şifre</span>
+                    <input id="registerPassword" type="password" placeholder="En az 6 karakter" required>
+                </label>
+                <button type="submit" class="primary-button auth-submit">Kayıt Ol</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="appShell" class="app-shell hidden">
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-badge"><i class="fa-solid fa-glass-water"></i></div>
+                <div class="brand-badge"><i class="fa-solid fa-water"></i></div>
                 <div>
                     <h1>Fluid Tasks</h1>
-                    <p>The Editorial Flow</p>
+                    <p>Editoryal Akış Merkezi</p>
                 </div>
             </div>
 
             <nav class="sidebar-nav">
                 <button class="nav-item active" data-view="dashboard-view">
                     <i class="fa-solid fa-table-columns"></i>
-                    <span>Dashboard</span>
+                    <span>Panel</span>
                 </button>
                 <button class="nav-item" data-view="tasks-view">
                     <i class="fa-solid fa-list-check"></i>
-                    <span>My Tasks</span>
+                    <span>Görevlerim</span>
                 </button>
                 <button class="nav-item" data-view="group-view">
                     <i class="fa-solid fa-users"></i>
-                    <span>Group Tasks</span>
+                    <span>Ekip Görevleri</span>
                 </button>
                 <button class="nav-item" data-view="calendar-view">
                     <i class="fa-solid fa-calendar-days"></i>
-                    <span>Calendar</span>
+                    <span>Takvim</span>
                 </button>
                 <button class="nav-item" data-view="analytics-view">
                     <i class="fa-solid fa-chart-simple"></i>
-                    <span>Analytics</span>
+                    <span>Analitik</span>
                 </button>
             </nav>
 
             <button class="add-task-button" id="openCreateTask">
                 <i class="fa-solid fa-plus"></i>
-                <span>Add Task</span>
+                <span>Görev Ekle</span>
             </button>
 
             <div class="sidebar-footer">
-                <button class="footer-link"><i class="fa-solid fa-gear"></i><span>Settings</span></button>
-                <button class="footer-link"><i class="fa-regular fa-circle-question"></i><span>Help</span></button>
+                <button type="button" class="footer-link" id="settingsButton"><i class="fa-solid fa-gear"></i><span>Ayarlar</span></button>
+                <button type="button" class="footer-link" id="helpButton"><i class="fa-regular fa-circle-question"></i><span>Yardım</span></button>
+                <button type="button" class="footer-link" id="logoutButton"><i class="fa-solid fa-right-from-bracket"></i><span>Çıkış Yap</span></button>
             </div>
         </aside>
 
@@ -59,17 +111,17 @@
             <header class="topbar">
                 <label class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input id="searchInput" type="search" placeholder="Search tasks, analytics, or files...">
+                    <input id="searchInput" type="search" placeholder="Görev, analiz veya dosya ara...">
                 </label>
 
                 <div class="topbar-actions">
-                    <button class="icon-button"><i class="fa-solid fa-bell"></i></button>
-                    <button class="icon-button"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button class="icon-button" id="notificationsButton"><i class="fa-solid fa-bell"></i></button>
+                    <button class="icon-button" id="historyButton"><i class="fa-solid fa-clock-rotate-left"></i></button>
                     <div class="profile-chip">
-                        <img id="profileAvatar" src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0f6ea8&color=fff" alt="Profile avatar">
+                        <img id="profileAvatar" src="https://ui-avatars.com/api/?name=Fluid+Tasks&background=0f6ea8&color=fff" alt="Profil">
                         <div>
-                            <strong id="profileName">Alex Morgan</strong>
-                            <span id="profileRole">Editorial Lead</span>
+                            <strong id="profileName">Kullanıcı</strong>
+                            <span id="profileRole">Takım Üyesi</span>
                         </div>
                     </div>
                 </div>
@@ -78,21 +130,21 @@
             <section id="dashboard-view" class="view active">
                 <div class="hero">
                     <div>
-                        <p class="eyebrow">In Progress <span id="heroProject">Project: Editorial Flow Refresh</span></p>
-                        <h2>Today's Flow</h2>
-                        <p id="heroSubtitle" class="hero-subtitle">You have 0 critical focuses for today.</p>
+                        <p class="eyebrow">Aktif Akış <span id="heroProject">Proje: Editoryal Yenileme</span></p>
+                        <h2>Bugünün Akışı</h2>
+                        <p id="heroSubtitle" class="hero-subtitle">Bugün için 0 kritik odağın var.</p>
                     </div>
                     <div class="hero-actions">
-                        <button class="ghost-button" id="quickFocusButton">Mark Complete</button>
-                        <button class="primary-button" id="shareTaskButton">Share Task</button>
+                        <button type="button" class="ghost-button" id="quickFocusButton">Odak Görevini Tamamla</button>
+                        <button type="button" class="primary-button" id="shareTaskButton">Görevi Paylaş</button>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
                     <section class="panel panel-large">
                         <div class="panel-header">
-                            <h3>Today's Focus</h3>
-                            <span class="badge">Priority</span>
+                            <h3>Bugünün Odağı</h3>
+                            <span class="badge">Öncelik</span>
                         </div>
                         <div id="focusTask" class="focus-task"></div>
                         <div id="focusList" class="stack-list"></div>
@@ -100,45 +152,45 @@
 
                     <section class="panel panel-side">
                         <div class="panel-header">
-                            <h3>Efficiency Pulse</h3>
+                            <h3>Verim Nabzı</h3>
                             <span id="focusRateLabel">0%</span>
                         </div>
                         <div class="metric-row">
                             <div>
-                                <p class="metric-value" id="efficiencyValue">0.0<span>/6h</span></p>
-                                <p class="metric-caption">Time invested</p>
+                                <p class="metric-value" id="efficiencyValue">0.0<span>/6s</span></p>
+                                <p class="metric-caption">Harcanan süre</p>
                             </div>
                             <div>
                                 <p class="metric-value accent" id="focusRate">0%</p>
-                                <p class="metric-caption">Focus rate</p>
+                                <p class="metric-caption">Odak oranı</p>
                             </div>
                         </div>
                         <div class="progress-track"><div id="efficiencyBar" class="progress-fill"></div></div>
                         <div class="mini-stat-grid">
                             <article class="mini-stat">
-                                <span>Estimated</span>
-                                <strong id="estimatedHours">0 hrs</strong>
+                                <span>Tahmin</span>
+                                <strong id="estimatedHours">0 sa</strong>
                             </article>
                             <article class="mini-stat">
-                                <span>Remaining</span>
-                                <strong id="remainingHours">0 hrs</strong>
+                                <span>Kalan</span>
+                                <strong id="remainingHours">0 sa</strong>
                             </article>
                         </div>
                     </section>
 
                     <section class="panel">
                         <div class="panel-header">
-                            <h3>Time Slots</h3>
-                            <button class="link-button">Manage</button>
+                            <h3>Zaman Blokları</h3>
+                            <button type="button" class="link-button" id="manageSlotsButton">Yönet</button>
                         </div>
                         <div id="timeSlots" class="time-slots"></div>
                     </section>
 
                     <section class="panel insight-panel">
                         <div class="insight-overlay">
-                            <p class="eyebrow light">Editor's Insight</p>
-                            <h3 id="insightTitle">You're 20% more productive during your 10 AM window.</h3>
-                            <p id="insightText">Schedule your most demanding task between 9:30 AM and 11:15 AM for maximum output.</p>
+                            <p class="eyebrow light">Editör İçgörüsü</p>
+                            <h3 id="insightTitle">Verimin sabah saatlerinde zirveye çıkıyor.</h3>
+                            <p id="insightText">En zor görevlerini sabah 09:30 ile 11:15 arasına yerleştir.</p>
                         </div>
                     </section>
                 </div>
@@ -147,17 +199,17 @@
             <section id="tasks-view" class="view">
                 <div class="hero compact">
                     <div>
-                        <p class="eyebrow">Personal Board</p>
-                        <h2>My Tasks</h2>
-                        <p class="hero-subtitle">Track sub-tasks, due dates, and momentum across your active work.</p>
+                        <p class="eyebrow">Kişisel Pano</p>
+                        <h2>Görevlerim</h2>
+                        <p class="hero-subtitle">Alt görevlerini, teslim tarihlerini ve ilerlemeyi tek yerde takip et.</p>
                     </div>
                 </div>
 
                 <div class="task-detail-layout">
                     <section class="panel panel-large">
                         <div class="panel-header">
-                            <h3>Sub-tasks</h3>
-                            <button class="link-button" id="openEditFromTasks">Open selected</button>
+                            <h3>Alt Görevler</h3>
+                            <button type="button" class="link-button" id="openEditFromTasks">Seçileni Aç</button>
                         </div>
                         <div id="taskDetailList" class="detail-list"></div>
                     </section>
@@ -165,33 +217,32 @@
                     <aside class="right-rail">
                         <section class="panel">
                             <div class="panel-header">
-                                <h3>Briefing Docs</h3>
+                            <h3>Brif Dosyaları</h3>
                             </div>
-                            <div class="doc-card">
+                            <button type="button" class="doc-card" id="openGuideButton">
                                 <i class="fa-solid fa-file-lines"></i>
                                 <div>
                                     <strong>brand_guidelines_v2.pdf</strong>
-                                    <span>2.4 MB • Updated 2h ago</span>
+                                    <span>2.4 MB - 2 saat önce güncellendi</span>
                                 </div>
-                            </div>
-                            <div class="doc-card">
+                            </button>
+                            <button type="button" class="doc-card" id="openMoodboardButton">
                                 <i class="fa-solid fa-image"></i>
                                 <div>
                                     <strong>moodboard_sustainability.png</strong>
-                                    <span>8.1 MB • Added yesterday</span>
+                                    <span>8.1 MB - dün eklendi</span>
                                 </div>
-                            </div>
+                            </button>
                         </section>
 
                         <section class="panel">
                             <div class="panel-header">
-                                <h3>Quick Chat</h3>
+                                <h3>Hızlı Sohbet</h3>
                             </div>
-                            <div class="chat-bubble incoming">Let's keep body text contrast above 7:1.</div>
-                            <div class="chat-bubble outgoing">I'm testing the new task layout now.</div>
+                            <div id="chatMessages"></div>
                             <div class="chat-input">
-                                <input type="text" placeholder="Type a message...">
-                                <button class="icon-button small"><i class="fa-solid fa-paper-plane"></i></button>
+                                <input id="chatMessageInput" type="text" placeholder="Mesaj yaz...">
+                                <button type="button" class="icon-button small" id="sendChatButton"><i class="fa-solid fa-paper-plane"></i></button>
                             </div>
                         </section>
                     </aside>
@@ -201,40 +252,40 @@
             <section id="group-view" class="view">
                 <div class="hero compact">
                     <div>
-                        <p class="eyebrow">Team Capacity</p>
-                        <h2>Group Workspace</h2>
-                        <p class="hero-subtitle">Manage departments, sprint velocity, and cross-functional delivery.</p>
+                        <p class="eyebrow">Ekip Kapasitesi</p>
+                        <h2>Ekip Alanı</h2>
+                        <p class="hero-subtitle">Departmanları, sprint hızını ve çapraz ekip teslimlerini yönet.</p>
                     </div>
                     <div class="hero-actions">
-                        <div class="segmented-control">
-                            <button class="active">Kanban</button>
-                            <button>List</button>
-                            <button>Timeline</button>
+                        <div class="segmented-control" id="groupModeTabs">
+                            <button type="button" class="active" data-mode="kanban">Kanban</button>
+                            <button type="button" data-mode="liste">Liste</button>
+                            <button type="button" data-mode="zaman-cizgisi">Zaman Çizgisi</button>
                         </div>
-                        <button class="primary-button" id="assignTaskButton">Assign Task</button>
+                        <button type="button" class="primary-button" id="assignTaskButton">Görev Ata</button>
                     </div>
                 </div>
 
                 <div class="group-grid">
                     <section class="panel panel-large">
                         <div class="panel-header">
-                            <h3>Team Workload Overview</h3>
-                            <button class="link-button">Details</button>
+                            <h3>Ekip İş Yükü Özeti</h3>
+                            <button type="button" class="link-button" id="groupDetailsButton">Detaylar</button>
                         </div>
                         <div class="summary-cards">
                             <article class="summary-card">
-                                <span>Total Velocity</span>
+                                <span>Toplam Hız</span>
                                 <strong id="velocityPercent">0%</strong>
                                 <div class="progress-track"><div id="velocityBar" class="progress-fill"></div></div>
                             </article>
                             <article class="summary-card">
-                                <span>Active Sprints</span>
+                                <span>Aktif Sprint</span>
                                 <strong id="activeSprints">0</strong>
-                                <p id="dueSoonLabel">0 due soon</p>
+                                <p id="dueSoonLabel">0 yaklaşan teslim</p>
                             </article>
                             <article class="summary-card">
-                                <span>Risk Level</span>
-                                <strong id="riskLevel">Low</strong>
+                                <span>Risk Seviyesi</span>
+                                <strong id="riskLevel">Düşük</strong>
                                 <div class="risk-scale">
                                     <span class="active"></span>
                                     <span></span>
@@ -246,7 +297,7 @@
 
                     <section class="panel">
                         <div class="panel-header">
-                            <h3>Team Presence</h3>
+                            <h3>Ekip Durumu</h3>
                             <span class="presence-dot"></span>
                         </div>
                         <div id="teamPresence" class="presence-list"></div>
@@ -261,35 +312,35 @@
                 <div class="calendar-layout">
                     <aside class="calendar-sidebar">
                         <div class="panel-header">
-                            <h3>Unscheduled</h3>
+                            <h3>Plansızlar</h3>
                         </div>
                         <div id="unscheduledList" class="unscheduled-list"></div>
                         <button class="add-task-button secondary" id="calendarAddTask">
                             <i class="fa-solid fa-plus"></i>
-                            <span>Add Task</span>
+                            <span>Görev Ekle</span>
                         </button>
                         <div class="legend">
-                            <h4>Legend</h4>
-                            <div><span class="legend-dot work"></span>Work Projects</div>
-                            <div><span class="legend-dot personal"></span>Personal Time</div>
-                            <div><span class="legend-dot group"></span>Group / Team</div>
-                            <div><span class="legend-dot free"></span>Free Slot</div>
+                            <h4>Açıklama</h4>
+                            <div><span class="legend-dot work"></span>İş Projeleri</div>
+                            <div><span class="legend-dot personal"></span>Kişisel Zaman</div>
+                            <div><span class="legend-dot group"></span>Ekip / Grup</div>
+                            <div><span class="legend-dot free"></span>Boş Zaman</div>
                         </div>
                     </aside>
 
                     <section class="calendar-main">
                         <div class="calendar-header">
                             <div>
-                                <h2 id="calendarMonth">September 2024</h2>
-                                <p class="hero-subtitle">Week 37 • Editorial Phase</p>
+                                <h2 id="calendarMonth">Eylül 2024</h2>
+                                <p id="calendarSubtitle" class="hero-subtitle">Hafta 37 - Editoryal Faz</p>
                             </div>
                             <div class="hero-actions">
-                                <div class="segmented-control">
-                                    <button>Day</button>
-                                    <button class="active">Week</button>
-                                    <button>Month</button>
+                                <div class="segmented-control" id="calendarModeTabs">
+                                    <button type="button" data-mode="gun">Gün</button>
+                                    <button type="button" class="active" data-mode="hafta">Hafta</button>
+                                    <button type="button" data-mode="ay">Ay</button>
                                 </div>
-                                <button class="primary-button slim">Today</button>
+                                <button type="button" class="primary-button slim" id="todayButton">Bugün</button>
                             </div>
                         </div>
                         <div id="calendarGrid" class="calendar-grid"></div>
@@ -300,31 +351,31 @@
             <section id="analytics-view" class="view">
                 <div class="hero compact">
                     <div>
-                        <p class="eyebrow">Performance Snapshot</p>
-                        <h2>Analytics</h2>
-                        <p class="hero-subtitle">Weekly completion, status balance, and department distribution at a glance.</p>
+                        <p class="eyebrow">Performans Özeti</p>
+                        <h2>Analitik</h2>
+                        <p class="hero-subtitle">Haftalık tamamlama, durum dengesi ve departman dağılımını hızlıca gör.</p>
                     </div>
                 </div>
 
                 <div class="analytics-grid">
                     <section class="panel">
                         <div class="panel-header">
-                            <h3>Completion Rate</h3>
+                            <h3>Tamamlama Oranı</h3>
                         </div>
                         <div class="metric-hero">
                             <strong id="analyticsCompletion">0%</strong>
-                            <span>Completed tasks</span>
+                            <span>Tamamlanan görevler</span>
                         </div>
                     </section>
                     <section class="panel">
                         <div class="panel-header">
-                            <h3>Status Breakdown</h3>
+                            <h3>Durum Dağılımı</h3>
                         </div>
                         <div id="statusBreakdown" class="breakdown-list"></div>
                     </section>
                     <section class="panel">
                         <div class="panel-header">
-                            <h3>Department Mix</h3>
+                            <h3>Departman Dağılımı</h3>
                         </div>
                         <div id="departmentBreakdown" class="breakdown-list"></div>
                     </section>
@@ -337,79 +388,94 @@
         <div class="modal-dialog">
             <div class="modal-header">
                 <div>
-                    <p class="eyebrow">Task Editor</p>
-                    <h3 id="modalHeading">Create Task</h3>
+                    <p class="eyebrow">Görev Düzenleyici</p>
+                    <h3 id="modalHeading">Görev Oluştur</h3>
                 </div>
-                <button class="icon-button small" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="icon-button small" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <form id="taskForm" class="modal-form">
                 <input type="hidden" id="modalTaskId">
 
                 <label>
-                    <span>Task title</span>
-                    <input type="text" id="modalTitle" placeholder="Design editorial layout" required>
+                    <span>Görev başlığı</span>
+                    <input type="text" id="modalTitle" placeholder="Yeni görev başlığı" required>
                 </label>
 
                 <label>
-                    <span>Description</span>
-                    <textarea id="modalDescription" placeholder="Add a crisp summary for the team." rows="4"></textarea>
+                    <span>Açıklama</span>
+                    <textarea id="modalDescription" placeholder="Takım için kısa bir özet yaz." rows="4"></textarea>
                 </label>
 
                 <div class="form-grid">
                     <label>
-                        <span>Status</span>
+                        <span>Durum</span>
                         <select id="modalStatus">
-                            <option value="TO_DO">To Do</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="REVIEW">Review</option>
-                            <option value="DONE">Done</option>
+                            <option value="TO_DO">Yapılacak</option>
+                            <option value="IN_PROGRESS">Devam Ediyor</option>
+                            <option value="REVIEW">İncelemede</option>
+                            <option value="DONE">Tamamlandı</option>
                         </select>
                     </label>
 
                     <label>
-                        <span>Priority</span>
+                        <span>Öncelik</span>
                         <select id="modalPriority">
-                            <option value="HIGH">High</option>
-                            <option value="MEDIUM">Medium</option>
-                            <option value="LOW">Low</option>
+                            <option value="HIGH">Yüksek</option>
+                            <option value="MEDIUM">Orta</option>
+                            <option value="LOW">Düşük</option>
                         </select>
                     </label>
 
                     <label>
-                        <span>Department</span>
+                        <span>Departman</span>
                         <select id="modalDepartment">
-                            <option value="EDITORIAL">Editorial</option>
-                            <option value="DESIGN">Design</option>
-                            <option value="TECH">Tech</option>
-                            <option value="PRODUCT">Product</option>
-                            <option value="MARKETING">Marketing</option>
+                            <option value="EDITORIAL">Editoryal</option>
+                            <option value="DESIGN">Tasarım</option>
+                            <option value="TECH">Teknik</option>
+                            <option value="PRODUCT">Ürün</option>
+                            <option value="MARKETING">Pazarlama</option>
                         </select>
                     </label>
 
                     <label>
-                        <span>Due date</span>
+                        <span>Teslim tarihi</span>
                         <input type="date" id="modalDueDate">
                     </label>
 
                     <label>
-                        <span>Estimated hours</span>
+                        <span>Tahmini saat</span>
                         <input type="number" id="modalEstimatedHours" min="0" step="0.5" value="2">
                     </label>
 
                     <label>
-                        <span>Remaining hours</span>
+                        <span>Kalan saat</span>
                         <input type="number" id="modalRemainingHours" min="0" step="0.5" value="2">
                     </label>
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="ghost-button danger hidden" id="deleteTaskButton">Delete Task</button>
-                    <button type="submit" class="primary-button">Save Changes</button>
+                    <button type="button" class="ghost-button danger hidden" id="deleteTaskButton">Görevi Sil</button>
+                    <button type="submit" class="primary-button">Kaydet</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <div id="infoModal" class="modal hidden">
+        <div class="modal-dialog info-dialog">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">Bilgi</p>
+                    <h3 id="infoModalTitle">Bilgi</h3>
+                </div>
+                <button type="button" class="icon-button small" id="closeInfoModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="infoModalText" class="task-description">İçerik burada görünür.</p>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="app.js"></script>
 </body>

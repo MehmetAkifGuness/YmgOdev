@@ -2,7 +2,9 @@ package com.gunes.docker.controller;
 
 import com.gunes.docker.dto.TaskOverviewResponse;
 import com.gunes.docker.entity.Task;
+import com.gunes.docker.entity.User;
 import com.gunes.docker.repository.TaskRepository;
+import com.gunes.docker.service.AuthService;
 import com.gunes.docker.service.TaskOverviewService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,10 +28,12 @@ public class TaskController {
 
     private final TaskRepository taskRepository;
     private final TaskOverviewService taskOverviewService;
+    private final AuthService authService;
 
-    public TaskController(TaskRepository taskRepository, TaskOverviewService taskOverviewService) {
+    public TaskController(TaskRepository taskRepository, TaskOverviewService taskOverviewService, AuthService authService) {
         this.taskRepository = taskRepository;
         this.taskOverviewService = taskOverviewService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -40,20 +44,22 @@ public class TaskController {
     @GetMapping("/overview")
     public TaskOverviewResponse getOverview(
             @RequestParam(required = false) String query,
-            @RequestParam(required = false) String department
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Long userId
     ) {
-        return taskOverviewService.buildOverview(query, department);
+        return taskOverviewService.buildOverview(query, department, userId);
     }
 
     @PostMapping
     public Task createTask(@RequestBody Task task) {
+        task.setAssignee(resolveAssignee(task.getAssignee()));
         return taskRepository.save(task);
     }
 
     @PutMapping("/{id}")
     public Task updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Görev bulunamadı"));
 
         task.setTitle(updatedTask.getTitle());
         task.setDescription(updatedTask.getDescription());
@@ -63,7 +69,7 @@ public class TaskController {
         task.setDueDate(updatedTask.getDueDate());
         task.setEstimatedHours(updatedTask.getEstimatedHours());
         task.setRemainingHours(updatedTask.getRemainingHours());
-        task.setAssignee(updatedTask.getAssignee());
+        task.setAssignee(resolveAssignee(updatedTask.getAssignee()));
 
         return taskRepository.save(task);
     }
@@ -71,9 +77,16 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable Long id) {
         if (!taskRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Görev bulunamadı");
         }
 
         taskRepository.deleteById(id);
+    }
+
+    private User resolveAssignee(User assignee) {
+        if (assignee == null || assignee.getId() == null) {
+            return null;
+        }
+        return authService.getUserEntity(assignee.getId());
     }
 }

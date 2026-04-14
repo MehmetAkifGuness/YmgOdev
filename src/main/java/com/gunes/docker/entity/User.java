@@ -1,13 +1,18 @@
 package com.gunes.docker.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "users") // PostgreSQL'de "user" kelimesi rezerve olduğu için tablo adını "users" yapıyoruz
-@Data // Lombok: Getter, Setter, toString metodlarını otomatik yazar
+@Table(name = "users")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -17,7 +22,13 @@ public class User {
     private Long id;
 
     private String fullName;
-    private String title; // Örn: Editorial Lead, UI Design
+    private String title;
+
+    @Column(unique = true, nullable = false)
     private String email;
-    private String avatarUrl; // Profil fotoğrafı linki
+
+    private String avatarUrl;
+
+    @Column(nullable = false)
+    private String passwordHash;
 }

@@ -4,6 +4,7 @@ import com.gunes.docker.dto.TaskOverviewResponse;
 import com.gunes.docker.entity.Task;
 import com.gunes.docker.entity.User;
 import com.gunes.docker.repository.TaskRepository;
+import com.gunes.docker.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,27 +28,31 @@ public class TaskOverviewService {
     private static final List<String> DEPARTMENT_ORDER = List.of("EDITORIAL", "DESIGN", "TECH", "PRODUCT", "MARKETING");
 
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    public TaskOverviewService(TaskRepository taskRepository) {
+    public TaskOverviewService(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
-    public TaskOverviewResponse buildOverview(String query, String department) {
+    public TaskOverviewResponse buildOverview(String query, String department, Long userId) {
         List<Task> allTasks = taskRepository.findAll();
         List<Task> filteredTasks = allTasks.stream()
                 .filter(task -> matchesQuery(task, query))
                 .filter(task -> matchesDepartment(task, department))
                 .toList();
 
-        User profileUser = filteredTasks.stream()
-                .map(Task::getAssignee)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElseGet(() -> allTasks.stream()
-                        .map(Task::getAssignee)
-                        .filter(Objects::nonNull)
-                        .findFirst()
-                        .orElse(null));
+        User profileUser = userId == null
+                ? filteredTasks.stream()
+                    .map(Task::getAssignee)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElseGet(() -> allTasks.stream()
+                            .map(Task::getAssignee)
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(null))
+                : userRepository.findById(userId).orElse(null);
 
         return new TaskOverviewResponse(
                 filteredTasks,
@@ -61,7 +66,7 @@ public class TaskOverviewService {
 
     private TaskOverviewResponse.ProfileSummary buildProfile(User user) {
         if (user == null) {
-            return new TaskOverviewResponse.ProfileSummary("Team Member", "Contributor", null);
+            return new TaskOverviewResponse.ProfileSummary("Kullanıcı", "Takım Üyesi", null);
         }
 
         return new TaskOverviewResponse.ProfileSummary(user.getFullName(), user.getTitle(), user.getAvatarUrl());
@@ -79,18 +84,18 @@ public class TaskOverviewService {
         double remainingHours = sumOf(tasks, Task::getRemainingHours);
         double efficiencyHours = Math.max(0, estimatedHours - remainingHours);
 
-        String dateLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH));
+        String dateLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("d MMMM EEEE", Locale.forLanguageTag("tr-TR")));
         String insightTitle = focusTask == null
-                ? "Your strongest focus window is waiting to be filled."
-                : focusTask.getTitle() + " fits best in your 10:00 - 12:00 focus block.";
+                ? "En güçlü odak penceren yeni görev bekliyor."
+                : focusTask.getTitle() + " görevi 10:00 - 12:00 odak bloğuna en iyi uyuyor.";
         String insightText = focusTask == null
-                ? "Create a task to generate personalized focus recommendations."
-                : priorityLabel(focusTask.getPriority()) + " intensity is high. Placing this task in the morning deep-work window will improve delivery.";
+                ? "Kişisel odak önerileri oluşturmak için yeni bir görev ekleyin."
+                : priorityLabel(focusTask.getPriority()) + " yoğunluğu yüksek. Bu görevi sabah derin odak penceresine almak teslimi güçlendirir.";
 
         return new TaskOverviewResponse.DashboardSummary(
-                "Today's Flow",
-                dateLabel + " - You have " + tasks.stream().filter(task -> "HIGH".equals(task.getPriority())).count() + " critical focuses.",
-                focusTask == null ? "Project: Editorial Flow Refresh" : "Project: " + focusTask.getTitle(),
+                "Bugünün Akışı",
+                dateLabel + " - " + tasks.stream().filter(task -> "HIGH".equals(task.getPriority())).count() + " kritik odağın var.",
+                focusTask == null ? "Proje: Editoryal Yenileme" : "Proje: " + focusTask.getTitle(),
                 focusTask,
                 secondaryTasks,
                 efficiencyHours,
@@ -116,10 +121,10 @@ public class TaskOverviewService {
                 .orElse(null);
 
         return List.of(
-                new TaskOverviewResponse.TimeSlot("09:00", focusTask == null ? "Deep Work" : focusTask.getTitle(), "green"),
-                new TaskOverviewResponse.TimeSlot("11:30", "Free Slot - 45m available", "outline"),
-                new TaskOverviewResponse.TimeSlot("12:30", secondary == null ? "Lunch Break" : secondary.getTitle(), "violet"),
-                new TaskOverviewResponse.TimeSlot("14:00", third == null ? "Team Sync" : third.getTitle(), "blue")
+                new TaskOverviewResponse.TimeSlot("09:00", focusTask == null ? "Derin Odak" : focusTask.getTitle(), "green"),
+                new TaskOverviewResponse.TimeSlot("11:30", "Boş Zaman - 45 dk uygun", "outline"),
+                new TaskOverviewResponse.TimeSlot("12:30", secondary == null ? "Öğle Arası" : secondary.getTitle(), "violet"),
+                new TaskOverviewResponse.TimeSlot("14:00", third == null ? "Ekip Senkron" : third.getTitle(), "blue")
         );
     }
 
@@ -133,7 +138,7 @@ public class TaskOverviewService {
                 .count();
         int activeSprints = (int) tasks.stream().filter(task -> !"DONE".equals(task.getStatus())).count();
 
-        String riskLevel = velocityPercent > 65 ? "Low" : velocityPercent > 35 ? "Moderate" : "High";
+        String riskLevel = velocityPercent > 65 ? "Düşük" : velocityPercent > 35 ? "Orta" : "Yüksek";
 
         List<String> departmentTabs = new ArrayList<>();
         departmentTabs.add("ALL");
@@ -150,7 +155,7 @@ public class TaskOverviewService {
                         user.getFullName(),
                         user.getTitle(),
                         user.getAvatarUrl(),
-                        (user.getId() % 3 == 0) ? "Away" : "Online"
+                        (user.getId() % 3 == 0) ? "Uzakta" : "Çevrimiçi"
                 ))
                 .toList();
 
@@ -171,7 +176,7 @@ public class TaskOverviewService {
     }
 
     private TaskOverviewResponse.CalendarSummary buildCalendar(List<Task> tasks) {
-        String monthLabel = LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + LocalDate.now().getYear();
+        String monthLabel = LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, Locale.forLanguageTag("tr-TR")) + " " + LocalDate.now().getYear();
         List<Task> unscheduledTasks = tasks.stream().limit(3).toList();
         List<String> hours = List.of("08 AM", "09 AM", "10 AM", "11 AM", "02 PM");
 
@@ -273,29 +278,29 @@ public class TaskOverviewService {
 
     private String priorityLabel(String priority) {
         return switch (priority == null ? "" : priority) {
-            case "HIGH" -> "High Priority";
-            case "MEDIUM" -> "Medium Priority";
-            default -> "Low Priority";
+            case "HIGH" -> "Yüksek Öncelik";
+            case "MEDIUM" -> "Orta Öncelik";
+            default -> "Düşük Öncelik";
         };
     }
 
     private String statusLabel(String status) {
         return switch (status) {
-            case "TO_DO" -> "To Do";
-            case "IN_PROGRESS" -> "In Progress";
-            case "REVIEW" -> "Review";
-            case "DONE" -> "Done";
+            case "TO_DO" -> "Yapılacak";
+            case "IN_PROGRESS" -> "Devam Ediyor";
+            case "REVIEW" -> "İncelemede";
+            case "DONE" -> "Tamamlandı";
             default -> status;
         };
     }
 
     private String departmentLabel(String department) {
         return switch (department) {
-            case "EDITORIAL" -> "Editorial";
-            case "DESIGN" -> "Design";
-            case "TECH" -> "Tech";
-            case "PRODUCT" -> "Product";
-            case "MARKETING" -> "Marketing";
+            case "EDITORIAL" -> "Editoryal";
+            case "DESIGN" -> "Tasarım";
+            case "TECH" -> "Teknik";
+            case "PRODUCT" -> "Ürün";
+            case "MARKETING" -> "Pazarlama";
             default -> department;
         };
     }
