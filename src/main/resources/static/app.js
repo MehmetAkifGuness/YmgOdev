@@ -1,6 +1,7 @@
-const API_URL = "/api/tasks";
-const OVERVIEW_URL = "/api/tasks/overview";
-const AUTH_URL = "/api/auth";
+const API_BASE_URL = window.location.origin;
+const API_URL = `${API_BASE_URL}/api/tasks`;
+const OVERVIEW_URL = `${API_URL}/overview`;
+const AUTH_URL = `${API_BASE_URL}/api/auth`;
 const SESSION_KEY = "fluidTasksUser";
 const STATUS_ORDER = ["TO_DO", "IN_PROGRESS", "REVIEW", "DONE"];
 const STATUS_LABELS = { TO_DO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", REVIEW: "İncelemede", DONE: "Tamamlandı" };
