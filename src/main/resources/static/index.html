@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Tasks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Fluid Tasks</h1>
+            <p>Docker & PostgreSQL Altyapısı Aktif</p>
+        </header>
+
+        <div class="add-task-card">
+            <h3>Yeni Görev Ekle</h3>
+            <input type="text" id="title" placeholder="Görev Başlığı (Örn: Veritabanı Yedeklemesi)" required>
+            <input type="text" id="description" placeholder="Açıklama" required>
+            
+            <div class="row">
+                <select id="status">
+                    <option value="TO_DO">TO DO (Yapılacak)</option>
+                    <option value="IN_PROGRESS">IN PROGRESS (Devam Ediyor)</option>
+                    <option value="DONE">DONE (Tamamlandı)</option>
+                </select>
+                <input type="text" id="department" placeholder="Departman (Örn: TECH)">
+                <input type="number" id="hours" placeholder="Tahmini Süre (Saat)">
+            </div>
+            
+            <button onclick="createTask()">Kaydet ve Veritabanına Gönder</button>
+        </div>
+
+        <div class="tasks-container" id="tasksContainer">
+            </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
