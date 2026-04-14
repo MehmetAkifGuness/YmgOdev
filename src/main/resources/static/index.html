@@ -3,36 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluid Tasks</title>
+    <title>Fluid Tasks - Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🚀 Fluid Tasks</h1>
-            <p>Docker & PostgreSQL Altyapısı Aktif</p>
-        </header>
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="logo">Fluid Tasks</div>
+            <ul class="nav-links">
+                <li class="active"><i class="fa-solid fa-table-columns"></i> Dashboard</li>
+                <li><i class="fa-solid fa-list-check"></i> My Tasks</li>
+                <li><i class="fa-solid fa-users"></i> Group Tasks</li>
+                <li><i class="fa-solid fa-calendar-days"></i> Calendar</li>
+                <li><i class="fa-solid fa-chart-line"></i> Analytics</li>
+            </ul>
+            <button class="btn-add-task" onclick="showModal()">+ Add Task</button>
+        </nav>
 
-        <div class="add-task-card">
-            <h3>Yeni Görev Ekle</h3>
-            <input type="text" id="title" placeholder="Görev Başlığı (Örn: Veritabanı Yedeklemesi)" required>
-            <input type="text" id="description" placeholder="Açıklama" required>
-            
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search tasks, projects...">
+                </div>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Alex+Morgan" alt="User">
+                    <div><strong>Alex Morgan</strong><br>Editorial Lead</div>
+                </div>
+            </header>
+
+            <section class="flow-section">
+                <h2>Today's Flow</h2>
+                <div id="tasksContainer" class="task-list">
+                    </div>
+            </section>
+        </main>
+
+        <aside class="side-panel">
+            <div class="card pulse">
+                <h4>Efficiency Pulse</h4>
+                <div class="pulse-value">4.5<span>/6h</span></div>
+                <div class="progress-bar"><div class="fill" style="width: 75%"></div></div>
+            </div>
+            <div class="card weekly-flow">
+                <h4>Weekly Flow</h4>
+                <div class="stat"><strong>84%</strong> Completed</div>
+                <div class="stat"><strong>12</strong> Pending</div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h3>Quick Add Task</h3>
+            <input type="text" id="title" placeholder="Title">
+            <textarea id="description" placeholder="Description"></textarea>
             <div class="row">
                 <select id="status">
-                    <option value="TO_DO">TO DO (Yapılacak)</option>
-                    <option value="IN_PROGRESS">IN PROGRESS (Devam Ediyor)</option>
-                    <option value="DONE">DONE (Tamamlandı)</option>
+                    <option value="TO_DO">To Do</option>
+                    <option value="IN_PROGRESS">In Progress</option>
                 </select>
-                <input type="text" id="department" placeholder="Departman (Örn: TECH)">
-                <input type="number" id="hours" placeholder="Tahmini Süre (Saat)">
+                <select id="priority">
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                </select>
             </div>
-            
-            <button onclick="createTask()">Kaydet ve Veritabanına Gönder</button>
+            <button onclick="createTask()">Save Task</button>
+            <button onclick="hideModal()" class="btn-secondary">Cancel</button>
         </div>
-
-        <div class="tasks-container" id="tasksContainer">
-            </div>
     </div>
 
     <script src="app.js"></script>

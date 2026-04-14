@@ -16,19 +16,18 @@ public class Task {
     private Long id;
 
     private String title;
+    
+    @Column(columnDefinition = "TEXT")
     private String description;
     
-    // Görevin durumu: TO_DO, IN_PROGRESS, REVIEW, DONE
-    private String status; 
-    
-    // Hangi departmana ait: EDITORIAL, TECH, DESIGN, PRODUCT vb.
-    private String department; 
+    private String status; // TO_DO, IN_PROGRESS, REVIEW, DONE
+    private String department; // EDITORIAL, TECH, DESIGN, PRODUCT
+    private String priority; // HIGH, MEDIUM, LOW
 
-    private LocalDate dueDate; // Son teslim tarihi
-    
-    private Integer estimatedHours; // Tahmini efor
+    private LocalDate dueDate;
+    private Double estimatedHours; 
+    private Double remainingHours; // Efficiency Pulse için
 
-    // Şimdilik görevleri bir kullanıcıya atıyoruz (Many-to-One ilişkisi)
     @ManyToOne
     @JoinColumn(name = "assignee_id")
     private User assignee;

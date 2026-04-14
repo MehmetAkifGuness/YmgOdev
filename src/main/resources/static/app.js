@@ -1,27 +1,31 @@
 const API_URL = 'http://localhost:8081/api/tasks';
 
-// Sayfa ilk açıldığında veritabanındaki görevleri getir
 document.addEventListener('DOMContentLoaded', fetchTasks);
 
-// 1. GET İsteği: Görevleri Listele
 async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
         const tasks = await response.json();
         
         const container = document.getElementById('tasksContainer');
-        container.innerHTML = ''; // Eski listeyi temizle
+        container.innerHTML = ''; 
 
         tasks.forEach(task => {
             const taskElement = document.createElement('div');
-            taskElement.className = 'task-card';
+            // Öncelik durumuna göre yan taraftaki renkli şeridi belirliyoruz
+            const priorityClass = task.priority ? `priority-${task.priority.toLowerCase()}` : '';
+            taskElement.className = `task-card ${priorityClass}`;
+            
             taskElement.innerHTML = `
+                <div class="task-header">
+                    <span class="task-badge status-badge">${task.status}</span>
+                    <span class="task-badge priority-badge">${task.priority || 'MEDIUM'}</span>
+                </div>
                 <div class="task-title">${task.title}</div>
                 <div class="task-desc">${task.description}</div>
-                <div>
-                    <span class="task-badge">📌 ${task.status}</span>
-                    <span class="task-badge">🏢 ${task.department}</span>
-                    <span class="task-badge">⏳ ${task.estimatedHours} Saat</span>
+                <div class="task-footer">
+                    <span><i class="fa-solid fa-building"></i> ${task.department || 'General'}</span>
+                    <span><i class="fa-solid fa-clock"></i> ${task.estimatedHours || 0} hrs</span>
                 </div>
             `;
             container.appendChild(taskElement);
@@ -29,15 +33,15 @@ async function fetchTasks() {
     } catch (error) {
         console.error('Bağlantı Hatası:', error);
         document.getElementById('tasksContainer').innerHTML = 
-            '<p style="color: #ef4444;">Backend\'e ulaşılamıyor. Docker çalışıyor mu?</p>';
+            '<p class="error-msg">Backend sistemine ulaşılamıyor. Docker servislerini kontrol et!</p>';
     }
 }
 
-// 2. POST İsteği: Yeni Görev Ekle
 async function createTask() {
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
     const status = document.getElementById('status').value;
+    const priority = document.getElementById('priority').value;
     const department = document.getElementById('department').value;
     const hours = document.getElementById('hours').value;
 
@@ -50,32 +54,52 @@ async function createTask() {
         title: title,
         description: description,
         status: status,
+        priority: priority,
         department: department,
-        estimatedHours: parseInt(hours) || 0
+        estimatedHours: parseFloat(hours) || 0.0
     };
 
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newTask)
         });
 
         if (response.ok) {
-            // Kayıt başarılıysa formu temizle ve listeyi yenile
-            document.getElementById('title').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('department').value = '';
-            document.getElementById('hours').value = '';
-            
-            fetchTasks();
+            resetForm();
+            hideModal(); // Kayıt sonrası modal'ı kapat
+            fetchTasks(); // Listeyi yenile
         } else {
-            alert('Görev kaydedilirken sunucu hatası oluştu (400/500).');
+            alert('Görev kaydedilirken sunucu hatası oluştu.');
         }
     } catch (error) {
         console.error('Kayıt Hatası:', error);
-        alert('Görev gönderilemedi. Sunucu kapalı olabilir.');
+        alert('Sunucuya ulaşılamadı.');
+    }
+}
+
+// Formu temizleme fonksiyonu
+function resetForm() {
+    document.getElementById('title').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('department').value = '';
+    document.getElementById('hours').value = '';
+}
+
+// Modal Kontrolleri (Tasarımda kullandığımız butonlar için)
+function showModal() {
+    document.getElementById('taskModal').style.display = 'block';
+}
+
+function hideModal() {
+    document.getElementById('taskModal').style.display = 'none';
+}
+
+// Modal dışına tıklandığında kapatma
+window.onclick = function(event) {
+    const modal = document.getElementById('taskModal');
+    if (event.target == modal) {
+        hideModal();
     }
 }
