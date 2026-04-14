@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluid Tasks - Dashboard</title>
+    <title>Fluid Tasks - Modern Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -12,11 +12,11 @@
         <nav class="sidebar">
             <div class="logo">Fluid Tasks</div>
             <ul class="nav-links">
-                <li class="active"><i class="fa-solid fa-table-columns"></i> Dashboard</li>
-                <li><i class="fa-solid fa-list-check"></i> My Tasks</li>
-                <li><i class="fa-solid fa-users"></i> Group Tasks</li>
-                <li><i class="fa-solid fa-calendar-days"></i> Calendar</li>
-                <li><i class="fa-solid fa-chart-line"></i> Analytics</li>
+                <li class="active" onclick="navigateTo('dashboard')"><i class="fa-solid fa-table-columns"></i> Dashboard</li>
+                <li onclick="navigateTo('kanban')"><i class="fa-solid fa-list-check"></i> My Tasks</li>
+                <li onclick="navigateTo('group')"><i class="fa-solid fa-users"></i> Group Workspace</li>
+                <li onclick="navigateTo('calendar')"><i class="fa-solid fa-calendar-days"></i> Calendar</li>
+                <li onclick="navigateTo('analytics')"><i class="fa-solid fa-chart-line"></i> Analytics</li>
             </ul>
             <button class="btn-add-task" onclick="showModal()">+ Add Task</button>
         </nav>
@@ -28,15 +28,25 @@
                     <input type="text" placeholder="Search tasks, projects...">
                 </div>
                 <div class="user-profile">
-                    <img src="https://ui-avatars.com/api/?name=Alex+Morgan" alt="User">
+                    <img src="https://ui-avatars.com/api/?name=Alex+Morgan" alt="User Avatar">
                     <div><strong>Alex Morgan</strong><br>Editorial Lead</div>
                 </div>
             </header>
 
-            <section class="flow-section">
+            <section id="dashboard-view" class="view">
                 <h2>Today's Flow</h2>
                 <div id="tasksContainer" class="task-list">
                     </div>
+            </section>
+
+            <section id="kanban-view" class="view" style="display: none;">
+                <h2>Group Workspace</h2>
+                <div class="kanban-board">
+                    <div class="kanban-column" id="col-todo"><h3>To Do</h3><div class="task-cards"></div></div>
+                    <div class="kanban-column" id="col-inprogress"><h3>In Progress</h3><div class="task-cards"></div></div>
+                    <div class="kanban-column" id="col-review"><h3>Review</h3><div class="task-cards"></div></div>
+                    <div class="kanban-column" id="col-done"><h3>Done</h3><div class="task-cards"></div></div>
+                </div>
             </section>
         </main>
 
@@ -56,21 +66,37 @@
 
     <div id="taskModal" class="modal">
         <div class="modal-content">
-            <h3>Quick Add Task</h3>
-            <input type="text" id="title" placeholder="Title">
-            <textarea id="description" placeholder="Description"></textarea>
-            <div class="row">
-                <select id="status">
-                    <option value="TO_DO">To Do</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                </select>
-                <select id="priority">
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                </select>
+            <header class="modal-header">
+                <h3>Edit Task Details</h3>
+                <span class="close" onclick="hideModal()">&times;</span>
+            </header>
+            <div class="modal-body">
+                <input type="hidden" id="modalTaskId">
+                <input type="text" id="modalTitle" placeholder="Task Title">
+                <textarea id="modalDescription" placeholder="Task Description"></textarea>
+                
+                <div class="row">
+                    <select id="modalStatus">
+                        <option value="TO_DO">To Do</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                    </select>
+                    <select id="modalPriority">
+                        <option value="HIGH">High Priority</option>
+                        <option value="MEDIUM">Medium Priority</option>
+                    </select>
+                </div>
+                
+                <h4>Subtasks</h4>
+                <ul class="subtasks-list">
+                    <li><input type="checkbox"> Brand color palette</li>
+                    <li><input type="checkbox"> Typography pairing</li>
+                </ul>
+                
+                <div class="modal-actions">
+                    <button class="btn-save" onclick="updateTask()">Save Changes</button>
+                    <button class="btn-delete" onclick="deleteTask()">Delete Task</button>
+                </div>
             </div>
-            <button onclick="createTask()">Save Task</button>
-            <button onclick="hideModal()" class="btn-secondary">Cancel</button>
         </div>
     </div>
 

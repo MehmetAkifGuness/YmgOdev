@@ -1,105 +1,91 @@
 const API_URL = 'http://localhost:8081/api/tasks';
 
-document.addEventListener('DOMContentLoaded', fetchTasks);
+// 1. Uygulama Başlangıcı
+document.addEventListener('DOMContentLoaded', () => {
+    fetchTasks();
+});
 
+// 2. GET İsteği: Görevleri Listele ve Kartları Oluştur
 async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
         const tasks = await response.json();
         
+        // Dashboard Görünümünü Doldur (Tasarım 1)
         const container = document.getElementById('tasksContainer');
         container.innerHTML = ''; 
 
         tasks.forEach(task => {
-            const taskElement = document.createElement('div');
-            // Öncelik durumuna göre yan taraftaki renkli şeridi belirliyoruz
-            const priorityClass = task.priority ? `priority-${task.priority.toLowerCase()}` : '';
-            taskElement.className = `task-card ${priorityClass}`;
-            
-            taskElement.innerHTML = `
-                <div class="task-header">
-                    <span class="task-badge status-badge">${task.status}</span>
-                    <span class="task-badge priority-badge">${task.priority || 'MEDIUM'}</span>
-                </div>
+            const el = document.createElement('div');
+            el.className = `task-card`;
+            el.onclick = () => showModal(task); // Tıklayınca Detay Modalı (Tasarım 4)
+            el.innerHTML = `
                 <div class="task-title">${task.title}</div>
                 <div class="task-desc">${task.description}</div>
-                <div class="task-footer">
-                    <span><i class="fa-solid fa-building"></i> ${task.department || 'General'}</span>
-                    <span><i class="fa-solid fa-clock"></i> ${task.estimatedHours || 0} hrs</span>
-                </div>
             `;
-            container.appendChild(taskElement);
+            container.appendChild(el);
         });
-    } catch (error) {
-        console.error('Bağlantı Hatası:', error);
-        document.getElementById('tasksContainer').innerHTML = 
-            '<p class="error-msg">Backend sistemine ulaşılamıyor. Docker servislerini kontrol et!</p>';
-    }
+        
+    } catch (e) { console.error('Bağlantı Hatası:', e); }
 }
 
-async function createTask() {
-    const title = document.getElementById('title').value;
-    const description = document.getElementById('description').value;
-    const status = document.getElementById('status').value;
-    const priority = document.getElementById('priority').value;
-    const department = document.getElementById('department').value;
-    const hours = document.getElementById('hours').value;
-
-    if (!title || !description) {
-        alert('Lütfen görev başlığı ve açıklama alanlarını doldur!');
-        return;
-    }
-
-    const newTask = {
-        title: title,
-        description: description,
-        status: status,
-        priority: priority,
-        department: department,
-        estimatedHours: parseFloat(hours) || 0.0
+// 3. FULL-STACK UPDATE (PUT İsteği) - "Save Changes" Butonu
+async function updateTask() {
+    const taskId = document.getElementById('modalTaskId').value;
+    const data = {
+        title: document.getElementById('modalTitle').value,
+        description: document.getElementById('modalDescription').value,
+        status: document.getElementById('modalStatus').value,
+        priority: document.getElementById('modalPriority').value
     };
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newTask)
+        const response = await fetch(`${API_URL}/${taskId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
         });
 
         if (response.ok) {
-            resetForm();
-            hideModal(); // Kayıt sonrası modal'ı kapat
+            hideModal();
             fetchTasks(); // Listeyi yenile
-        } else {
-            alert('Görev kaydedilirken sunucu hatası oluştu.');
-        }
-    } catch (error) {
-        console.error('Kayıt Hatası:', error);
-        alert('Sunucuya ulaşılamadı.');
-    }
+        } else { alert('Görev güncellenemedi.'); }
+    } catch (e) { console.error('Hata:', e); }
 }
 
-// Formu temizleme fonksiyonu
-function resetForm() {
-    document.getElementById('title').value = '';
-    document.getElementById('description').value = '';
-    document.getElementById('department').value = '';
-    document.getElementById('hours').value = '';
+// 4. FULL-STACK DELETE (DELETE İsteği) - "Delete Task" Butonu
+async function deleteTask() {
+    const taskId = document.getElementById('modalTaskId').value;
+    if (!confirm('Bu görevi silmek istediğine emin misin?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/${taskId}`, { method: 'DELETE' });
+
+        if (response.ok) {
+            hideModal();
+            fetchTasks(); // Listeyi yenile
+        } else { alert('Görev silinemedi.'); }
+    } catch (e) { console.error('Hata:', e); }
 }
 
-// Modal Kontrolleri (Tasarımda kullandığımız butonlar için)
-function showModal() {
+// 5. UI Yönetimi: Navigasyon ve Modal Kontrolleri
+function navigateTo(viewName) {
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+    
+    document.getElementById(`${viewName}-view`).style.display = 'block';
+    // Tıklanan menü öğesini aktif yap
+    event.currentTarget.classList.add('active');
+}
+
+function showModal(task) {
     document.getElementById('taskModal').style.display = 'block';
+    // Modalı seçilen görevin verileriyle doldur
+    document.getElementById('modalTaskId').value = task.id;
+    document.getElementById('modalTitle').value = task.title;
+    document.getElementById('modalDescription').value = task.description;
+    document.getElementById('modalStatus').value = task.status;
+    document.getElementById('modalPriority').value = task.priority || 'MEDIUM';
 }
 
-function hideModal() {
-    document.getElementById('taskModal').style.display = 'none';
-}
-
-// Modal dışına tıklandığında kapatma
-window.onclick = function(event) {
-    const modal = document.getElementById('taskModal');
-    if (event.target == modal) {
-        hideModal();
-    }
-}
+function hideModal() { document.getElementById('taskModal').style.display = 'none'; }
