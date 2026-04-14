@@ -1,7 +1,8 @@
 const API_BASE_URL = window.location.origin;
 const API_URL = `${API_BASE_URL}/api/tasks`;
 const OVERVIEW_URL = `${API_URL}/overview`;
-const AUTH_URL = `${API_BASE_URL}/api/auth`;
+const LOGIN_URL = `${API_BASE_URL}/api/login`;
+const REGISTER_URL = `${API_BASE_URL}/api/register`;
 const SESSION_KEY = "fluidTasksUser";
 const STATUS_ORDER = ["TO_DO", "IN_PROGRESS", "REVIEW", "DONE"];
 const STATUS_LABELS = { TO_DO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", REVIEW: "İncelemede", DONE: "Tamamlandı" };
@@ -112,7 +113,7 @@ async function handleLogin(event) {
     if (!email || !password) return showAuthMessage("E-posta ve şifre zorunludur.");
     if (!isValidEmail(email)) return showAuthMessage("Lütfen geçerli bir e-posta adresi gir.");
 
-    await authRequest("/login", { email, password }, "Giriş başarılı.");
+    await authRequest(LOGIN_URL, { email, password }, "Giriş başarılı.", "Giriş");
 }
 
 async function handleRegister(event) {
@@ -129,12 +130,14 @@ async function handleRegister(event) {
     if (password.length < 6) return showAuthMessage("Şifre en az 6 karakter olmalıdır.");
     if (password !== confirmPassword) return showAuthMessage("Şifreler birbiriyle eşleşmiyor.");
 
-    await authRequest("/register", { fullName, email, password }, "Kayıt tamamlandı ve oturum açıldı.");
+    await authRequest(REGISTER_URL, { fullName, email, password }, "Kayıt tamamlandı ve oturum açıldı.", "Kayıt");
 }
 
-async function authRequest(path, body, successMessage) {
+async function authRequest(url, body, successMessage, actionLabel) {
     try {
-        const data = await requestJson(`${AUTH_URL}${path}`, jsonRequest("POST", body));
+        console.log(`[Auth][${actionLabel}] İstek gönderiliyor`, buildDebugPayload(body));
+        const data = await requestJson(url, jsonRequest("POST", body));
+        console.log(`[Auth][${actionLabel}] Başarılı yanıt alındı`, data);
         currentUser = data;
         saveSessionUser(data);
         resetAuthForms();
@@ -147,6 +150,7 @@ async function authRequest(path, body, successMessage) {
         await fetchTasks();
         showToast(successMessage, "success");
     } catch (error) {
+        console.error(`[Auth][${actionLabel}] Hata`, error);
         showAuthMessage(error.message || "İşlem başarısız.");
         showToast(error.message || "İşlem başarısız.", "error");
     }
@@ -472,7 +476,10 @@ async function requestJson(url, options = {}) {
     const response = await fetch(url, options);
     const raw = await response.text();
     const data = raw ? tryParseJson(raw) : null;
-    if (!response.ok) throw new Error(data?.message || data?.error || raw || "İşlem başarısız.");
+    if (!response.ok) {
+        console.error("[API] Başarısız yanıt", { url, status: response.status, body: data ?? raw });
+        throw new Error(data?.message || data?.error || raw || "İşlem başarısız.");
+    }
     return data;
 }
 
@@ -626,4 +633,15 @@ async function copyToClipboard(valueToCopy) {
 
 function escapeHtml(value) {
     return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+
+function buildDebugPayload(body) {
+    const payload = { ...body };
+    if ("password" in payload) payload.password = maskSecret(payload.password);
+    return payload;
+}
+
+function maskSecret(secret) {
+    if (!secret) return "";
+    return "*".repeat(String(secret).length);
 }

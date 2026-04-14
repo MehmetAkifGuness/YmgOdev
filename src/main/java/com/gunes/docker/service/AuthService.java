@@ -4,6 +4,8 @@ import com.gunes.docker.dto.AuthRequest;
 import com.gunes.docker.dto.AuthResponse;
 import com.gunes.docker.entity.User;
 import com.gunes.docker.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.util.Locale;
 @Service
 public class AuthService {
     private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,7 +30,9 @@ public class AuthService {
         validateRequest(request, true);
 
         String normalizedEmail = request.email().trim().toLowerCase(Locale.ROOT);
+        log.info("Kayıt akışı başladı. email={}", normalizedEmail);
         if (userRepository.findByEmail(normalizedEmail).isPresent()) {
+            log.warn("Kayıt reddedildi. email={} zaten kayıtlı", normalizedEmail);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bu e-posta zaten kayıtlı");
         }
 
@@ -38,19 +43,31 @@ public class AuthService {
         user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.fullName().trim().replace(" ", "+") + "&background=0f6ea8&color=fff");
         user.setPasswordHash(passwordEncoder.encode(request.password()));
 
-        return toResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        log.info("Kullanıcı veritabanına kaydedildi. id={}, email={}", savedUser.getId(), savedUser.getEmail());
+        return toResponse(savedUser);
     }
 
     public AuthResponse login(AuthRequest request) {
         validateRequest(request, false);
 
-        User user = userRepository.findByEmail(request.email().trim().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-posta veya şifre hatalı"));
+        String normalizedEmail = request.email().trim().toLowerCase(Locale.ROOT);
+        log.info("Giriş akışı başladı. email={}", normalizedEmail);
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> {
+                    log.warn("Giriş başarısız. Kullanıcı veritabanında bulunamadı. email={}", normalizedEmail);
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-posta veya şifre hatalı");
+                });
+
+        log.info("Kullanıcı veritabanından okundu. id={}, email={}", user.getId(), user.getEmail());
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Giriş başarısız. Şifre eşleşmedi. email={}", normalizedEmail);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-posta veya şifre hatalı");
         }
 
+        log.info("Giriş başarılı. id={}, email={}", user.getId(), user.getEmail());
         return toResponse(user);
     }
 
