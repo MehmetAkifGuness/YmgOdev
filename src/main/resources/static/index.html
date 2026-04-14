@@ -3,100 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fluid Tasks - Modern Dashboard</title>
+    <title>Fluid Tasks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-layout">
-        <nav class="sidebar">
-            <div class="logo">Fluid Tasks</div>
-            <ul class="nav-links">
-                <li class="active" onclick="navigateTo('dashboard')"><i class="fa-solid fa-table-columns"></i> Dashboard</li>
-                <li onclick="navigateTo('kanban')"><i class="fa-solid fa-list-check"></i> My Tasks</li>
-                <li onclick="navigateTo('group')"><i class="fa-solid fa-users"></i> Group Workspace</li>
-                <li onclick="navigateTo('calendar')"><i class="fa-solid fa-calendar-days"></i> Calendar</li>
-                <li onclick="navigateTo('analytics')"><i class="fa-solid fa-chart-line"></i> Analytics</li>
-            </ul>
-            <button class="btn-add-task" onclick="showModal()">+ Add Task</button>
-        </nav>
-
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search tasks, projects...">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-badge"><i class="fa-solid fa-glass-water"></i></div>
+                <div>
+                    <h1>Fluid Tasks</h1>
+                    <p>The Editorial Flow</p>
                 </div>
-                <div class="user-profile">
-                    <img src="https://ui-avatars.com/api/?name=Alex+Morgan" alt="User Avatar">
-                    <div><strong>Alex Morgan</strong><br>Editorial Lead</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="dashboard-view">
+                    <i class="fa-solid fa-table-columns"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="tasks-view">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>My Tasks</span>
+                </button>
+                <button class="nav-item" data-view="group-view">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Group Tasks</span>
+                </button>
+                <button class="nav-item" data-view="calendar-view">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Calendar</span>
+                </button>
+                <button class="nav-item" data-view="analytics-view">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Analytics</span>
+                </button>
+            </nav>
+
+            <button class="add-task-button" id="openCreateTask">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Task</span>
+            </button>
+
+            <div class="sidebar-footer">
+                <button class="footer-link"><i class="fa-solid fa-gear"></i><span>Settings</span></button>
+                <button class="footer-link"><i class="fa-regular fa-circle-question"></i><span>Help</span></button>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <header class="topbar">
+                <label class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="searchInput" type="search" placeholder="Search tasks, analytics, or files...">
+                </label>
+
+                <div class="topbar-actions">
+                    <button class="icon-button"><i class="fa-solid fa-bell"></i></button>
+                    <button class="icon-button"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <div class="profile-chip">
+                        <img id="profileAvatar" src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0f6ea8&color=fff" alt="Profile avatar">
+                        <div>
+                            <strong id="profileName">Alex Morgan</strong>
+                            <span id="profileRole">Editorial Lead</span>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <section id="dashboard-view" class="view">
-                <h2>Today's Flow</h2>
-                <div id="tasksContainer" class="task-list">
+            <section id="dashboard-view" class="view active">
+                <div class="hero">
+                    <div>
+                        <p class="eyebrow">In Progress <span id="heroProject">Project: Editorial Flow Refresh</span></p>
+                        <h2>Today's Flow</h2>
+                        <p id="heroSubtitle" class="hero-subtitle">You have 0 critical focuses for today.</p>
                     </div>
+                    <div class="hero-actions">
+                        <button class="ghost-button" id="quickFocusButton">Mark Complete</button>
+                        <button class="primary-button" id="shareTaskButton">Share Task</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <section class="panel panel-large">
+                        <div class="panel-header">
+                            <h3>Today's Focus</h3>
+                            <span class="badge">Priority</span>
+                        </div>
+                        <div id="focusTask" class="focus-task"></div>
+                        <div id="focusList" class="stack-list"></div>
+                    </section>
+
+                    <section class="panel panel-side">
+                        <div class="panel-header">
+                            <h3>Efficiency Pulse</h3>
+                            <span id="focusRateLabel">0%</span>
+                        </div>
+                        <div class="metric-row">
+                            <div>
+                                <p class="metric-value" id="efficiencyValue">0.0<span>/6h</span></p>
+                                <p class="metric-caption">Time invested</p>
+                            </div>
+                            <div>
+                                <p class="metric-value accent" id="focusRate">0%</p>
+                                <p class="metric-caption">Focus rate</p>
+                            </div>
+                        </div>
+                        <div class="progress-track"><div id="efficiencyBar" class="progress-fill"></div></div>
+                        <div class="mini-stat-grid">
+                            <article class="mini-stat">
+                                <span>Estimated</span>
+                                <strong id="estimatedHours">0 hrs</strong>
+                            </article>
+                            <article class="mini-stat">
+                                <span>Remaining</span>
+                                <strong id="remainingHours">0 hrs</strong>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3>Time Slots</h3>
+                            <button class="link-button">Manage</button>
+                        </div>
+                        <div id="timeSlots" class="time-slots"></div>
+                    </section>
+
+                    <section class="panel insight-panel">
+                        <div class="insight-overlay">
+                            <p class="eyebrow light">Editor's Insight</p>
+                            <h3 id="insightTitle">You're 20% more productive during your 10 AM window.</h3>
+                            <p id="insightText">Schedule your most demanding task between 9:30 AM and 11:15 AM for maximum output.</p>
+                        </div>
+                    </section>
+                </div>
             </section>
 
-            <section id="kanban-view" class="view" style="display: none;">
-                <h2>Group Workspace</h2>
-                <div class="kanban-board">
-                    <div class="kanban-column" id="col-todo"><h3>To Do</h3><div class="task-cards"></div></div>
-                    <div class="kanban-column" id="col-inprogress"><h3>In Progress</h3><div class="task-cards"></div></div>
-                    <div class="kanban-column" id="col-review"><h3>Review</h3><div class="task-cards"></div></div>
-                    <div class="kanban-column" id="col-done"><h3>Done</h3><div class="task-cards"></div></div>
+            <section id="tasks-view" class="view">
+                <div class="hero compact">
+                    <div>
+                        <p class="eyebrow">Personal Board</p>
+                        <h2>My Tasks</h2>
+                        <p class="hero-subtitle">Track sub-tasks, due dates, and momentum across your active work.</p>
+                    </div>
+                </div>
+
+                <div class="task-detail-layout">
+                    <section class="panel panel-large">
+                        <div class="panel-header">
+                            <h3>Sub-tasks</h3>
+                            <button class="link-button" id="openEditFromTasks">Open selected</button>
+                        </div>
+                        <div id="taskDetailList" class="detail-list"></div>
+                    </section>
+
+                    <aside class="right-rail">
+                        <section class="panel">
+                            <div class="panel-header">
+                                <h3>Briefing Docs</h3>
+                            </div>
+                            <div class="doc-card">
+                                <i class="fa-solid fa-file-lines"></i>
+                                <div>
+                                    <strong>brand_guidelines_v2.pdf</strong>
+                                    <span>2.4 MB • Updated 2h ago</span>
+                                </div>
+                            </div>
+                            <div class="doc-card">
+                                <i class="fa-solid fa-image"></i>
+                                <div>
+                                    <strong>moodboard_sustainability.png</strong>
+                                    <span>8.1 MB • Added yesterday</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="panel">
+                            <div class="panel-header">
+                                <h3>Quick Chat</h3>
+                            </div>
+                            <div class="chat-bubble incoming">Let's keep body text contrast above 7:1.</div>
+                            <div class="chat-bubble outgoing">I'm testing the new task layout now.</div>
+                            <div class="chat-input">
+                                <input type="text" placeholder="Type a message...">
+                                <button class="icon-button small"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="group-view" class="view">
+                <div class="hero compact">
+                    <div>
+                        <p class="eyebrow">Team Capacity</p>
+                        <h2>Group Workspace</h2>
+                        <p class="hero-subtitle">Manage departments, sprint velocity, and cross-functional delivery.</p>
+                    </div>
+                    <div class="hero-actions">
+                        <div class="segmented-control">
+                            <button class="active">Kanban</button>
+                            <button>List</button>
+                            <button>Timeline</button>
+                        </div>
+                        <button class="primary-button" id="assignTaskButton">Assign Task</button>
+                    </div>
+                </div>
+
+                <div class="group-grid">
+                    <section class="panel panel-large">
+                        <div class="panel-header">
+                            <h3>Team Workload Overview</h3>
+                            <button class="link-button">Details</button>
+                        </div>
+                        <div class="summary-cards">
+                            <article class="summary-card">
+                                <span>Total Velocity</span>
+                                <strong id="velocityPercent">0%</strong>
+                                <div class="progress-track"><div id="velocityBar" class="progress-fill"></div></div>
+                            </article>
+                            <article class="summary-card">
+                                <span>Active Sprints</span>
+                                <strong id="activeSprints">0</strong>
+                                <p id="dueSoonLabel">0 due soon</p>
+                            </article>
+                            <article class="summary-card">
+                                <span>Risk Level</span>
+                                <strong id="riskLevel">Low</strong>
+                                <div class="risk-scale">
+                                    <span class="active"></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3>Team Presence</h3>
+                            <span class="presence-dot"></span>
+                        </div>
+                        <div id="teamPresence" class="presence-list"></div>
+                    </section>
+                </div>
+
+                <div id="departmentTabs" class="department-tabs"></div>
+                <div id="kanbanBoard" class="kanban-board"></div>
+            </section>
+
+            <section id="calendar-view" class="view">
+                <div class="calendar-layout">
+                    <aside class="calendar-sidebar">
+                        <div class="panel-header">
+                            <h3>Unscheduled</h3>
+                        </div>
+                        <div id="unscheduledList" class="unscheduled-list"></div>
+                        <button class="add-task-button secondary" id="calendarAddTask">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Task</span>
+                        </button>
+                        <div class="legend">
+                            <h4>Legend</h4>
+                            <div><span class="legend-dot work"></span>Work Projects</div>
+                            <div><span class="legend-dot personal"></span>Personal Time</div>
+                            <div><span class="legend-dot group"></span>Group / Team</div>
+                            <div><span class="legend-dot free"></span>Free Slot</div>
+                        </div>
+                    </aside>
+
+                    <section class="calendar-main">
+                        <div class="calendar-header">
+                            <div>
+                                <h2 id="calendarMonth">September 2024</h2>
+                                <p class="hero-subtitle">Week 37 • Editorial Phase</p>
+                            </div>
+                            <div class="hero-actions">
+                                <div class="segmented-control">
+                                    <button>Day</button>
+                                    <button class="active">Week</button>
+                                    <button>Month</button>
+                                </div>
+                                <button class="primary-button slim">Today</button>
+                            </div>
+                        </div>
+                        <div id="calendarGrid" class="calendar-grid"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="analytics-view" class="view">
+                <div class="hero compact">
+                    <div>
+                        <p class="eyebrow">Performance Snapshot</p>
+                        <h2>Analytics</h2>
+                        <p class="hero-subtitle">Weekly completion, status balance, and department distribution at a glance.</p>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3>Completion Rate</h3>
+                        </div>
+                        <div class="metric-hero">
+                            <strong id="analyticsCompletion">0%</strong>
+                            <span>Completed tasks</span>
+                        </div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3>Status Breakdown</h3>
+                        </div>
+                        <div id="statusBreakdown" class="breakdown-list"></div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3>Department Mix</h3>
+                        </div>
+                        <div id="departmentBreakdown" class="breakdown-list"></div>
+                    </section>
                 </div>
             </section>
         </main>
-
-        <aside class="side-panel">
-            <div class="card pulse">
-                <h4>Efficiency Pulse</h4>
-                <div class="pulse-value">4.5<span>/6h</span></div>
-                <div class="progress-bar"><div class="fill" style="width: 75%"></div></div>
-            </div>
-            <div class="card weekly-flow">
-                <h4>Weekly Flow</h4>
-                <div class="stat"><strong>84%</strong> Completed</div>
-                <div class="stat"><strong>12</strong> Pending</div>
-            </div>
-        </aside>
     </div>
 
-    <div id="taskModal" class="modal">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h3>Edit Task Details</h3>
-                <span class="close" onclick="hideModal()">&times;</span>
-            </header>
-            <div class="modal-body">
-                <input type="hidden" id="modalTaskId">
-                <input type="text" id="modalTitle" placeholder="Task Title">
-                <textarea id="modalDescription" placeholder="Task Description"></textarea>
-                
-                <div class="row">
-                    <select id="modalStatus">
-                        <option value="TO_DO">To Do</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                    </select>
-                    <select id="modalPriority">
-                        <option value="HIGH">High Priority</option>
-                        <option value="MEDIUM">Medium Priority</option>
-                    </select>
+    <div id="taskModal" class="modal hidden">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">Task Editor</p>
+                    <h3 id="modalHeading">Create Task</h3>
                 </div>
-                
-                <h4>Subtasks</h4>
-                <ul class="subtasks-list">
-                    <li><input type="checkbox"> Brand color palette</li>
-                    <li><input type="checkbox"> Typography pairing</li>
-                </ul>
-                
-                <div class="modal-actions">
-                    <button class="btn-save" onclick="updateTask()">Save Changes</button>
-                    <button class="btn-delete" onclick="deleteTask()">Delete Task</button>
-                </div>
+                <button class="icon-button small" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
             </div>
+
+            <form id="taskForm" class="modal-form">
+                <input type="hidden" id="modalTaskId">
+
+                <label>
+                    <span>Task title</span>
+                    <input type="text" id="modalTitle" placeholder="Design editorial layout" required>
+                </label>
+
+                <label>
+                    <span>Description</span>
+                    <textarea id="modalDescription" placeholder="Add a crisp summary for the team." rows="4"></textarea>
+                </label>
+
+                <div class="form-grid">
+                    <label>
+                        <span>Status</span>
+                        <select id="modalStatus">
+                            <option value="TO_DO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="REVIEW">Review</option>
+                            <option value="DONE">Done</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Priority</span>
+                        <select id="modalPriority">
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Department</span>
+                        <select id="modalDepartment">
+                            <option value="EDITORIAL">Editorial</option>
+                            <option value="DESIGN">Design</option>
+                            <option value="TECH">Tech</option>
+                            <option value="PRODUCT">Product</option>
+                            <option value="MARKETING">Marketing</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Due date</span>
+                        <input type="date" id="modalDueDate">
+                    </label>
+
+                    <label>
+                        <span>Estimated hours</span>
+                        <input type="number" id="modalEstimatedHours" min="0" step="0.5" value="2">
+                    </label>
+
+                    <label>
+                        <span>Remaining hours</span>
+                        <input type="number" id="modalRemainingHours" min="0" step="0.5" value="2">
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="ghost-button danger hidden" id="deleteTaskButton">Delete Task</button>
+                    <button type="submit" class="primary-button">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
