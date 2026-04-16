@@ -1,0 +1,23 @@
+name: 🚀 Auto Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Kodları indir
+      uses: actions/checkout@v4
+
+    - name: 🐳 Docker Compose ile deploy
+      run: |
+        docker-compose down --volumes --remove-orphans
+        docker-compose up --build -d
+
+    - name: 🔍 Sağlık kontrolü
+      run: |
+        sleep 30
+        curl -f http://localhost:8081 || exit 1
